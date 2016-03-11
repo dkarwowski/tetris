@@ -18,8 +18,8 @@
 #define Megabytes(x) (Kilobytes(x) * 1024)
 #define Gigabytes(x) (Megabytes(x) * 1024)
 
-#define SCREEN_WIDTH 400
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 960
+#define SCREEN_HEIGHT 540
 
 typedef struct {
     bool endedDown;
@@ -32,9 +32,15 @@ typedef struct {
     union {
         game_control control[3];
         struct {
+            game_control left;
+            game_control right;
             game_control rotCW;
             game_control rotCCW;
             game_control drop;
+
+#ifdef DEBUG
+            game_control reload;
+#endif
 
             game_control terminate;
         };
@@ -66,7 +72,6 @@ typedef struct {
 #endif
 
     void *gameLib_p;
-
     upd_and_ren *UpdateAndRender_fp;
 } game_lib;
 

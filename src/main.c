@@ -21,11 +21,20 @@ HandleEvent(SDL_Event *event_p, game_input *oInput_p, game_input *nInput_p)
 
             if (wasDown != isDown) {
                 if (event_p->key.keysym.sym == SDLK_LEFT)
-                    ProcessKeyboardInput(&(oInput_p->rotCCW), &(nInput_p->rotCCW), isDown);
+                    ProcessKeyboardInput(&(oInput_p->left), &(nInput_p->left), isDown);
                 if (event_p->key.keysym.sym == SDLK_RIGHT)
-                    ProcessKeyboardInput(&(oInput_p->rotCW), &(nInput_p->rotCW), isDown);
+                    ProcessKeyboardInput(&(oInput_p->right), &(nInput_p->right), isDown);
+                if (event_p->key.keysym.sym == SDLK_UP)
+                    ProcessKeyboardInput(&(oInput_p->rotCW), &(nInput_p->rotCCW), isDown);
+                if (event_p->key.keysym.sym == SDLK_DOWN)
+                    ProcessKeyboardInput(&(oInput_p->rotCCW), &(nInput_p->rotCW), isDown);
                 if (event_p->key.keysym.sym == SDLK_SPACE)
                     ProcessKeyboardInput(&(oInput_p->drop), &(nInput_p->drop), isDown);
+
+#ifdef DEBUG
+                if (event_p->key.keysym.sym == SDLK_r)
+                    ProcessKeyboardInput(&(oInput_p->reload), &(nInput_p->reload), isDown);
+#endif
 
                 if (event_p->key.keysym.sym == SDLK_ESCAPE)
                     ProcessKeyboardInput(&(oInput_p->terminate), &(nInput_p->terminate), isDown);
@@ -218,6 +227,11 @@ main(int argc, char *argv[])
                 SDL_Delay(1000.0/GOAL_FPS);
                 continue;
             }
+
+#ifdef DEBUG
+            if (nInput.reload.endedDown)
+                LoadGame(&gameLib);
+#endif
 
             prevCount = currCount;
             currCount = SDL_GetPerformanceCounter();
