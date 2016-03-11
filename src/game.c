@@ -32,13 +32,13 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 {
     // the board
     static u32 board[BOARD_HEIGHT][BOARD_WIDTH] = {0};
-    static i32 botRow = 0;
 
     board[0][1] = s_line;
-    board[0][2] = s_line;
-    board[0][3] = s_line;
-    board[0][4] = s_line;
-    board[1][4] = s_line;
+    board[0][2] = s_T;
+    board[0][3] = s_l;
+    board[0][4] = s_s;
+    board[1][1] = s_z;
+    board[1][3] = s_bl;
 
     { // Rendering
         SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
@@ -76,6 +76,21 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     switch (board[y][x]) {
                     case s_line:
                         SDL_SetRenderDrawColor(renderer_p, 255, 0, 0, 255);
+                        break;
+                    case s_T:
+                        SDL_SetRenderDrawColor(renderer_p, 0, 255, 0, 255);
+                        break;
+                    case s_s:
+                        SDL_SetRenderDrawColor(renderer_p, 0, 0, 255, 255);
+                        break;
+                    case s_z:
+                        SDL_SetRenderDrawColor(renderer_p, 255, 255, 0, 255);
+                        break;
+                    case s_l:
+                        SDL_SetRenderDrawColor(renderer_p, 0, 255, 255, 255);
+                        break;
+                    case s_bl:
+                        SDL_SetRenderDrawColor(renderer_p, 255, 125, 0, 255);
                         break;
                     default:
                         SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
