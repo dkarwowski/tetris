@@ -27,18 +27,38 @@ enum shapes {
     s_bl   = 6
 };
 
+struct row {
+    u8 spots[BOARD_WIDTH];
+    struct row *next;
+    u32 y;
+};
+
+struct board {
+    struct row rows[BOARD_HEIGHT];
+    struct row *first;
+};
+
+#define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
+
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
     // the board
-    static u32 board[BOARD_HEIGHT][BOARD_WIDTH] = {0};
+    static struct board board = {0};
 
-    board[0][1] = s_line;
-    board[0][2] = s_T;
-    board[0][3] = s_l;
-    board[0][4] = s_s;
-    board[1][1] = s_z;
-    board[1][3] = s_bl;
+    // Initialization
+    board.first = &(board.rows[0]);
+    for (int i = 1; i < BOARD_HEIGHT; i++) {
+        board.rows[i-1].next = &(board.rows[i]);
+        board.rows[i].y = i;
+    }
+
+    board.first->spots[0] = s_line;
+    board.first->spots[1] = s_T;
+    board.first->spots[2] = s_s;
+    board.first->spots[3] = s_z;
+    board.first->spots[4] = s_l;
+    board.first->spots[5] = s_bl;
 
     { // Rendering
         SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
@@ -63,17 +83,18 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             .w = BLOCK_SIZE, 
             .h = BLOCK_SIZE
         };
-        for (int y = 0; y < BOARD_HEIGHT; y++) {
+        for_row(row_p, board.first) {
             for (int x = 0; x < BOARD_WIDTH; x++) {
 
-                if ((y + x) % 2)
+                if ((row_p->y + x) % 2)
                     SDL_SetRenderDrawColor(renderer_p, 175, 175, 175, 255);
                 else
                     SDL_SetRenderDrawColor(renderer_p, 195, 195, 195, 255);
                 SDL_RenderFillRect(renderer_p, &rect);
 
-                if (board[y][x] != s_none) {
-                    switch (board[y][x]) {
+                // NOTE(david): draw the pieces
+                if (row_p->spots[x] != s_none) {
+                    switch (row_p->spots[x]) {
                     case s_line:
                         SDL_SetRenderDrawColor(renderer_p, 255, 0, 0, 255);
                         break;
