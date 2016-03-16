@@ -12,11 +12,24 @@ DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
     }
 }
 
+static void
+DK_RenderInlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
+{
+    for (int i = 0; i < width; i++) {
+        SDL_RenderDrawRect(renderer_p, &rect);
+        rect.x += 1;
+        rect.y += 1;
+        rect.w -= 2;
+        rect.h -= 2;
+    }
+}
+
 #include "board.c"
 
 struct piece {
     v2 pos;
     v2 spots[4];
+    u32 type;
 };
 
 extern void
@@ -25,6 +38,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     // the board
     static struct board board = {0};
     static bool init = false;
+
+    static struct piece dropping = {
+        .pos = {3.0f, 3.0f},
+        .spots = {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+        .type = s_line
+    };
 
     // Initialization
     if (!init) {
@@ -36,12 +55,19 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             board.rows[i].y = i;
         }
 
-        board.first->spots[0] = s_line;
-        board.first->spots[1] = s_T;
-        board.first->spots[2] = s_s;
-        board.first->spots[3] = s_z;
-        board.first->spots[4] = s_l;
-        board.first->spots[5] = s_bl;
+        struct row *row_p = GetRow(&board, (u32)dropping.pos.y);
+        for (int i = 0; i < 4; i++) {
+            if (fequal(dropping.spots[i].y, 0.0f, 0.0001f)) {
+                row_p->spots[(i32)(dropping.pos.x + dropping.spots[i].x)] = dropping.type;
+            } else {
+                struct row *fix_p = row_p;
+                while (!fequal(fix_p->y, (dropping.pos.y + dropping.spots[i].y), 0.001f))
+                    fix_p = (dropping.spots[i].y < 0) ? row_p->prev : row_p->next;
+
+                fix_p->spots[(i32)(dropping.pos.x + dropping.spots[i].x)] = dropping.type;
+            }
+        }
+
         init = true;
     }
 
@@ -70,7 +96,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         };
         for_row(row_p, board.first) {
             for (int x = 0; x < BOARD_WIDTH; x++) {
-
                 if ((row_p->y + x) % 2)
                     SDL_SetRenderDrawColor(renderer_p, 175, 175, 175, 255);
                 else
@@ -103,11 +128,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         color = V4i(255, 0, 255, 255);
                     }
                     SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
+
                     SDL_Rect r2 = rect;
-                    r2.x += 5;
-                    r2.y += 5;
-                    r2.w -= 10;
-                    r2.h -= 10;
+                    r2.x += 4;
+                    r2.y += 4;
+                    r2.w -= 8;
+                    r2.h -= 8;
                     SDL_RenderFillRect(renderer_p, &r2);
 
                     v3 hsv = RGBtoHSV(color);
@@ -115,7 +141,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     color = HSVtoRGB(hsv);
 
                     SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
-                    DK_RenderOutlineRect(renderer_p, r2, 3);
+                    DK_RenderInlineRect(renderer_p, r2, 4);
                 }
 
                 rect.x += BLOCK_SIZE;

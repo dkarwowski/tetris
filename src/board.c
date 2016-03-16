@@ -1,5 +1,17 @@
 #include "board.h"
 
+struct row *
+GetRow(struct board *board_p, u32 rowID)
+{
+    ASSERT(0 <= rowID && rowID < BOARD_HEIGHT);
+    for_row(iter_p, board_p->first) {
+        if (rowID-- == 0)
+            return iter_p;
+    }
+
+    return NULL;
+}
+
 void
 ClearRow(struct board *board_p, struct row *row_p)
 {
