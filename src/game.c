@@ -1,9 +1,5 @@
 #include "main.h"
 
-#define BOARD_HEIGHT 19
-#define BOARD_WIDTH 10
-#define BLOCK_SIZE 55
-
 static void
 DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
 {
@@ -16,57 +12,7 @@ DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
     }
 }
 
-enum shapes {
-    s_none = 0,
-
-    s_line = 1,
-    s_T    = 2,
-    s_s    = 3,
-    s_z    = 4,
-    s_l    = 5,
-    s_bl   = 6
-};
-
-struct row {
-    u8 spots[BOARD_WIDTH];
-    struct row *next, *prev;
-    u32 y;
-};
-
-struct board {
-    struct row rows[BOARD_HEIGHT];
-    struct row *first, *last;
-};
-
-#define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
-
-void
-ClearRow(struct board *board_p, struct row *row_p)
-{
-    if (row_p->prev)
-        row_p->prev->next = row_p->next;
-    if (row_p->next)
-        row_p->next->prev = row_p->prev;
-
-    struct row *prev_p = row_p->prev;
-
-    if (row_p == board_p->first)
-        board_p->first = row_p->next;
-
-    board_p->last->next = row_p;
-    row_p->prev = board_p->last;
-    board_p->last = row_p;
-    board_p->last->next = NULL;
-
-    int y = (prev_p) ? prev_p->y : 0;
-    prev_p = (prev_p) ? prev_p : board_p->first;
-    for_row(iter_p, prev_p) {
-        iter_p->y = y++;
-    }
-
-    for (int i = 0; i < BOARD_WIDTH; i++)
-        row_p->spots[i] = 0;
-}
+#include "board.c"
 
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
