@@ -288,40 +288,66 @@ HSVtoRGB(v3 col)
 {
     v4 result = {0};
 
-    if (col.s <= 0)
-        result = (v4){col.s, col.s, col.s, 1.0f};
-    else {
+    r32 c = col.v * col.s;
+    r32 x = c * (1.0f - fabs(fmodf((col.h / 60.0f), 2) - 1));
+    r32 m = col.v - c;
 
-        // assume that 0 <= h <= 360
-        i32 section = (i32)(col.h / 60.0f);
-        r32 f = col.h - section;            // fractional
-        r32 p = col.v * (1 - col.s);
-        r32 q = col.v * (1 - col.s * f);
-        r32 t = col.v * (1 - col.s * (1 - f));
-
-        switch(section)
-        {
-        case 0: 
-            result = (v4){col.v, t, p, 1.0f};
-            break;
-        case 1:
-            result = (v4){q, col.v, p, 1.0f};
-            break;
-        case 2:
-            result = (v4){p, col.v, t, 1.0f};
-            break;
-        case 3:
-            result = (v4){p, q, col.v, 1.0f};
-            break;
-        case 4:
-            result = (v4){t, p, col.v, 1.0f};
-            break;
-        default:
-            result = (v4){col.v, p, q, 1.0f};
-            break;
-        }
+    switch ((i32)(col.h / 60.0f))
+    {
+    case 0:
+        result = V4(c, x, 0.0f, 1.0f);
+        break;
+    case 1:
+        result = V4(x, c, 0.0f, 1.0f);
+        break;
+    case 2:
+        result = V4(0.0f, c, x, 1.0f);
+        break;
+    case 3:
+        result = V4(0.0f, x, c, 1.0f);
+        break;
+    case 4:
+        result = V4(x, 0.0f, c, 1.0f);
+        break;
+    default:
+        result = V4(c, 0.0f, x, 1.0f);
+        break;
     }
-    result = mulV4(255, result);
+
+    result = mulV4(255, addV4(result, V4(m, m, m, 0.0f)));
+
+    return result;
+}
+
+dk_inline v3
+RGBtoHSV(v4 col)
+{
+    r32 r = (r32)col.r/255.0;
+    r32 g = (r32)col.g/255.0;
+    r32 b = (r32)col.b/255.0;
+
+    r32 cmax = MAX(r, MAX(g, b));
+    r32 cmin = MIN(r, MIN(g, b));
+    r32 delta = cmax - cmin;
+
+    v3 result = {0};
+
+    if (fequal(cmax, cmin, 0.0001f)) {
+        result.h = 0.0f;
+    }
+    else if (fequal(cmax, r, 0.0001f)) {
+        result.h = 60.0f * fmodf(((g - b)/delta), 6);
+    }
+    else if (fequal(cmax, g, 0.0001f)) {
+        result.h = 60.0f * (((b - r)/delta) + 2);
+    }
+    else if (fequal(cmax, b, 0.0001f)) {
+        result.h = 60.0f * (((r - g)/delta) + 4);
+    }
+
+    result.s = (fequal(cmax, 0.0f, 0.0001f)) ? 0.0f : delta/cmax;
+
+    result.v = cmax;
 
     return result;
 }

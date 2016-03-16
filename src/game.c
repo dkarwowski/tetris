@@ -14,6 +14,11 @@ DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
 
 #include "board.c"
 
+struct piece {
+    v2 pos;
+    v2 spots[4];
+};
+
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
@@ -73,29 +78,31 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 SDL_RenderFillRect(renderer_p, &rect);
 
                 // NOTE(david): draw the pieces
+                v4 color;
                 if (row_p->spots[x] != s_none) {
                     switch (row_p->spots[x]) {
                     case s_line:
-                        SDL_SetRenderDrawColor(renderer_p, 255, 0, 0, 255);
+                        color = V4i(255, 0, 0, 255);
                         break;
                     case s_T:
-                        SDL_SetRenderDrawColor(renderer_p, 0, 255, 0, 255);
+                        color = V4i(0, 255, 0, 255);
                         break;
                     case s_s:
-                        SDL_SetRenderDrawColor(renderer_p, 0, 0, 255, 255);
+                        color = V4i(0, 0, 255, 255);
                         break;
                     case s_z:
-                        SDL_SetRenderDrawColor(renderer_p, 255, 255, 0, 255);
+                        color = V4i(255, 255, 0, 255);
                         break;
                     case s_l:
-                        SDL_SetRenderDrawColor(renderer_p, 0, 255, 255, 255);
+                        color = V4i(0, 255, 255, 255);
                         break;
                     case s_bl:
-                        SDL_SetRenderDrawColor(renderer_p, 255, 125, 0, 255);
+                        color = V4i(255, 125, 0, 255);
                         break;
                     default:
-                        SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
+                        color = V4i(255, 0, 255, 255);
                     }
+                    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
                     SDL_Rect r2 = rect;
                     r2.x += 5;
                     r2.y += 5;
@@ -103,8 +110,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     r2.h -= 10;
                     SDL_RenderFillRect(renderer_p, &r2);
 
-                    SDL_SetRenderDrawColor(renderer_p, 0, 0, 0, 255);
-                    DK_RenderOutlineRect(renderer_p, r2, 4);
+                    v3 hsv = RGBtoHSV(color);
+                    hsv.v *= 0.3f;
+                    color = HSVtoRGB(hsv);
+
+                    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
+                    DK_RenderOutlineRect(renderer_p, r2, 3);
                 }
 
                 rect.x += BLOCK_SIZE;
