@@ -23,9 +23,9 @@ run: $(TARGET)
 gdb: $(TARGET)
 	@if [ -d "./data" ]; \
 	then \
-		pushd data && gdb ../bin/$(TARGET) && popd; \
+		pushd data && lldb ../bin/$(TARGET) && popd; \
 	else \
-		pushd ../data && gdb ../bin/$(TARGET) && popd; \
+		pushd ../data && lldb ../bin/$(TARGET) && popd; \
 	fi
 
 clean:

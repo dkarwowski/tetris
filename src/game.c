@@ -29,36 +29,70 @@ enum shapes {
 
 struct row {
     u8 spots[BOARD_WIDTH];
-    struct row *next;
+    struct row *next, *prev;
     u32 y;
 };
 
 struct board {
     struct row rows[BOARD_HEIGHT];
-    struct row *first;
+    struct row *first, *last;
 };
 
 #define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
+
+void
+ClearRow(struct board *board_p, struct row *row_p)
+{
+    if (row_p->prev)
+        row_p->prev->next = row_p->next;
+    if (row_p->next)
+        row_p->next->prev = row_p->prev;
+
+    struct row *prev_p = row_p->prev;
+
+    if (row_p == board_p->first)
+        board_p->first = row_p->next;
+
+    board_p->last->next = row_p;
+    row_p->prev = board_p->last;
+    board_p->last = row_p;
+    board_p->last->next = NULL;
+
+    int y = (prev_p) ? prev_p->y : 0;
+    prev_p = (prev_p) ? prev_p : board_p->first;
+    for_row(iter_p, prev_p) {
+        iter_p->y = y++;
+    }
+
+    for (int i = 0; i < BOARD_WIDTH; i++)
+        row_p->spots[i] = 0;
+}
 
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
     // the board
     static struct board board = {0};
+    static bool init = false;
 
     // Initialization
-    board.first = &(board.rows[0]);
-    for (int i = 1; i < BOARD_HEIGHT; i++) {
-        board.rows[i-1].next = &(board.rows[i]);
-        board.rows[i].y = i;
-    }
+    if (!init) {
+        board.first = &(board.rows[0]);
+        board.last  = &(board.rows[BOARD_HEIGHT - 1]);
+        for (int i = 1; i < BOARD_HEIGHT; i++) {
+            board.rows[i-1].next = &(board.rows[i]);
+            board.rows[i].prev = &(board.rows[i-1]);
+            board.rows[i].y = i;
+        }
 
-    board.first->spots[0] = s_line;
-    board.first->spots[1] = s_T;
-    board.first->spots[2] = s_s;
-    board.first->spots[3] = s_z;
-    board.first->spots[4] = s_l;
-    board.first->spots[5] = s_bl;
+        board.first->spots[0] = s_line;
+        board.first->spots[1] = s_T;
+        board.first->spots[2] = s_s;
+        board.first->spots[3] = s_z;
+        board.first->spots[4] = s_l;
+        board.first->spots[5] = s_bl;
+        init = true;
+    }
 
     { // Rendering
         SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
