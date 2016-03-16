@@ -32,6 +32,35 @@ struct piece {
     u32 type;
 };
 
+void
+_SetType(struct board *board_p, struct piece *piece_p, u32 type)
+{
+    struct row *row_p = GetRow(board_p, (u32)piece_p->pos.y);
+    for (int i = 0; i < 4; i++) {
+        if (fequal(piece_p->spots[i].y, 0.0f, 0.0001f)) {
+            row_p->spots[(i32)(piece_p->pos.x + piece_p->spots[i].x)] = type;
+        } else {
+            struct row *fix_p = row_p;
+            while (!fequal(fix_p->y, (piece_p->pos.y + piece_p->spots[i].y), 0.001f))
+                fix_p = (piece_p->spots[i].y < 0) ? row_p->prev : row_p->next;
+
+            fix_p->spots[(i32)(piece_p->pos.x + piece_p->spots[i].x)] = type;
+        }
+    }
+}
+
+void
+PlacePiece(struct board *board_p, struct piece *piece_p)
+{
+    _SetType(board_p, piece_p, piece_p->type);
+}
+
+void
+RemovePiece(struct board *board_p, struct piece *piece_p)
+{
+    _SetType(board_p, piece_p, s_none);
+}
+
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
@@ -55,18 +84,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             board.rows[i].y = i;
         }
 
-        struct row *row_p = GetRow(&board, (u32)dropping.pos.y);
-        for (int i = 0; i < 4; i++) {
-            if (fequal(dropping.spots[i].y, 0.0f, 0.0001f)) {
-                row_p->spots[(i32)(dropping.pos.x + dropping.spots[i].x)] = dropping.type;
-            } else {
-                struct row *fix_p = row_p;
-                while (!fequal(fix_p->y, (dropping.pos.y + dropping.spots[i].y), 0.001f))
-                    fix_p = (dropping.spots[i].y < 0) ? row_p->prev : row_p->next;
-
-                fix_p->spots[(i32)(dropping.pos.x + dropping.spots[i].x)] = dropping.type;
-            }
-        }
+        PlacePiece(&board, &dropping);
 
         init = true;
     }
