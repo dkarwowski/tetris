@@ -69,10 +69,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     static bool init = false;
 
     static struct piece dropping = {
-        .pos = {3.0f, 3.0f},
+        .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 1},
         .spots = {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
         .type = s_line
     };
+
+    static r32 dropSpeed = 0.02f;
 
     // Initialization
     if (!init) {
@@ -87,6 +89,23 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         PlacePiece(&board, &dropping);
 
         init = true;
+    }
+
+    { // Update
+        v2 newPos = dropping.pos;
+        if (input_p->left.endedDown)
+            newPos = subV2(newPos, mulV2(0.1f, V2(1.0f, 0.0f)));
+        if (input_p->right.endedDown)
+            newPos = addV2(newPos, mulV2(0.1f, V2(1.0f, 0.0f)));
+       
+        newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 1.0f)));
+        if (newPos.y >= 0.0f && !fequal(newPos.y, dropping.pos.y, 0.001f)) {
+            RemovePiece(&board, &dropping);
+            dropping.pos = newPos;
+            PlacePiece(&board, &dropping);
+        } else if (newPos.y >= 0.0f) {
+            dropping.pos = newPos;
+        }
     }
 
     { // Rendering

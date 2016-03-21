@@ -1,7 +1,7 @@
 SHELL  = /bin/bash
 TARGET = tetris
 
-.PHONY: default all clean
+.PHONY: default all clean tags
 
 default: $(TARGET)
 
@@ -27,6 +27,9 @@ gdb: $(TARGET)
 	else \
 		pushd ../data && lldb ../bin/$(TARGET) && popd; \
 	fi
+
+tags:
+	ctags -R .
 
 clean:
 	-rm -rf bin/*.dSYM
