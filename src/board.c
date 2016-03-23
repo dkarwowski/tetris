@@ -13,7 +13,7 @@ GetRow(struct board *board_p, u32 rowID)
 }
 
 void
-ClearRow(struct board *board_p, struct row *row_p)
+ClearRow(struct board *board_p, struct row *row_p, u32 *clearedRows)
 {
     if (row_p->prev)
         row_p->prev->next = row_p->next;
@@ -38,4 +38,6 @@ ClearRow(struct board *board_p, struct row *row_p)
 
     for (int i = 0; i < BOARD_WIDTH; i++)
         row_p->spots[i] = 0;
+
+    (*clearedRows)++;
 }

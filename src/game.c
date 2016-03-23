@@ -75,6 +75,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     };
 
     static r32 dropSpeed = 0.02f;
+    static u32 clearedRows = 0;
 
     // Initialization
     if (!init) {
