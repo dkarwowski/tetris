@@ -39,6 +39,7 @@ typedef uintptr_t   uptr;
 #define fequal(a, b, eps) (fabs(a - b) < eps)
 
 #include "vectors.h"
+#include "intrinsics.h"
 
 #define _COMMON_H_
 #endif

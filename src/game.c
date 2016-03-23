@@ -61,6 +61,20 @@ RemovePiece(struct board *board_p, struct piece *piece_p)
     _SetType(board_p, piece_p, s_none);
 }
 
+bool
+IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
+{
+    for (int i = 0; i < 4; i++) {
+        v2 check = addV2(newPos, piece_p->spots[i]);
+        if (check.x <= 0.0f || check.y <= 0.0f || check.x >= BOARD_WIDTH)
+            return true;
+        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_none)
+            return true;
+    }
+
+    return false;
+}
+
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
@@ -93,20 +107,22 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     }
 
     { // Update
+        RemovePiece(&board, &dropping);
         v2 newPos = dropping.pos;
         if (input_p->left.endedDown)
-            newPos = subV2(newPos, mulV2(0.1f, V2(1.0f, 0.0f)));
+            newPos = subV2(newPos, mulV2(0.15f, V2(1.0f, 0.0f)));
         if (input_p->right.endedDown)
-            newPos = addV2(newPos, mulV2(0.1f, V2(1.0f, 0.0f)));
-       
+            newPos = addV2(newPos, mulV2(0.15f, V2(1.0f, 0.0f)));
+
+        if (IsCollide(&board, &dropping, newPos))
+            newPos = dropping.pos;
+
         newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 1.0f)));
-        if (newPos.y >= 0.0f && !fequal(newPos.y, dropping.pos.y, 0.001f)) {
-            RemovePiece(&board, &dropping);
+        if ((!IsCollide(&board, &dropping, newPos) 
+                && !fequal(newPos.y, dropping.pos.y, 0.001f)) || (newPos.y >= 0.0f))
             dropping.pos = newPos;
-            PlacePiece(&board, &dropping);
-        } else if (newPos.y >= 0.0f) {
-            dropping.pos = newPos;
-        }
+
+        PlacePiece(&board, &dropping);
     }
 
     { // Rendering
@@ -127,12 +143,14 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         DK_RenderOutlineRect(renderer_p, rect, 5);
 
         rect = (SDL_Rect) {
-            .x = 20, 
-            .y = screenHeight - BLOCK_SIZE - 20, 
-            .w = BLOCK_SIZE, 
+            .x = 20,
+            .y = screenHeight - BLOCK_SIZE - 20,
+            .w = BLOCK_SIZE,
             .h = BLOCK_SIZE
         };
+        bool toClear[BOARD_HEIGHT] = {0};
         for_row(row_p, board.first) {
+            u32 filledCount = 0;
             for (int x = 0; x < BOARD_WIDTH; x++) {
                 if ((row_p->y + x) % 2)
                     SDL_SetRenderDrawColor(renderer_p, 175, 175, 175, 255);
@@ -143,6 +161,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 // NOTE(david): draw the pieces
                 v4 color;
                 if (row_p->spots[x] != s_none) {
+                    filledCount += 1;
                     switch (row_p->spots[x]) {
                     case s_line:
                         color = V4i(255, 0, 0, 255);
@@ -186,6 +205,14 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             }
             rect.y -= BLOCK_SIZE;
             rect.x = 20;
+
+            if (filledCount == BOARD_HEIGHT)
+                toClear[((iptr)(row_p)-(iptr)&(board.rows))/sizeof(struct row)] = true;
+        }
+
+        for (int i = 0; i < BOARD_HEIGHT; i++) {
+            if (toClear[i])
+                ClearRow(&board, &(board.rows[i]), &clearedRows);
         }
 
         SDL_RenderPresent(renderer_p);
