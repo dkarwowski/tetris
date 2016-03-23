@@ -5,15 +5,15 @@
 #define BLOCK_SIZE 55
 
 enum shapes {
-    s_none = 0,
+    s_I = 0,
+    s_T = 1,
+    s_S = 2,
+    s_Z = 3,
+    s_L = 4,
+    s_J = 5,
+    s_O = 6,
 
-    s_I = 1,
-    s_T = 2,
-    s_S = 3,
-    s_Z = 4,
-    s_L = 5,
-    s_J = 6,
-    s_O = 7
+    s_COUNT = 7
 };
 
 struct row {
@@ -25,12 +25,13 @@ struct row {
 struct board {
     struct row rows[BOARD_HEIGHT];
     struct row *first, *last;
+    v2 pieces[s_COUNT][4][4];
 };
 
 struct piece {
     v2 pos;
-    v2 spots[4];
     u32 type;
+    u8 rot;
 };
 
 #define s_I_0 {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}}

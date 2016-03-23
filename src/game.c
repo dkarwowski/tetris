@@ -1,4 +1,4 @@
-#include "main.h"
+#include "game.h"
 
 static void
 DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
@@ -35,8 +35,8 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
     static struct piece dropping = {
         .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 1},
-        .spots = {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
-        .type = s_I
+        .type = s_I,
+        .rot = 0
     };
 
     static r32 dropSpeed = 0.02f;
@@ -48,11 +48,47 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     if (!init) {
         board.first = &(board.rows[0]);
         board.last  = &(board.rows[BOARD_HEIGHT - 1]);
-        for (int i = 1; i < BOARD_HEIGHT; i++) {
-            board.rows[i-1].next = &(board.rows[i]);
-            board.rows[i].prev = &(board.rows[i-1]);
+        for (int i = 0; i < BOARD_HEIGHT; i++) {
+            if (i != 0) {
+                board.rows[i-1].next = &(board.rows[i]);
+                board.rows[i].prev = &(board.rows[i-1]);
+            }
             board.rows[i].y = i;
+
+            for (int j = 0; j < BOARD_WIDTH; j++)
+                board.rows[i].spots[j] = s_COUNT;
         }
+
+
+        v2 boardPieces[s_COUNT][4][4] = {{{{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{0.0f, -2.0f}, {0.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}},
+                                          {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{0.0f, -2.0f}, {0.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}}},
+                                         {{{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}},
+                                          {{0.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}},
+                                          {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, -1.0f}},
+                                          {{0.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}}},
+                                         {{{-1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}},
+                                          {{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, -1.0f}},
+                                          {{-1.0f, -1.0f}, {0.0f, -1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{-1.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}}},
+                                         {{{-1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}, {1.0f, -1.0f}},
+                                          {{0.0f, 1.0f}, {0.0f, 0.0f}, {-1.0f, 0.0f}, {-1.0f, -1.0f}},
+                                          {{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}}},
+                                         {{{0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}, {1.0f, -1.0f}},
+                                          {{-1.0f, -1.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}},
+                                          {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}}},
+                                         {{{0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}, {-1.0f, -1.0f}},
+                                          {{-1.0f, -1.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}},
+                                          {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, -1.0f}}},
+                                         {{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
+                                          {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
+                                          {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
+                                          {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}}};
+        Copy(&(board.pieces), &boardPieces, sizeof(boardPieces));
 
         PlacePiece(&board, &dropping);
 
@@ -65,15 +101,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         if (!input_p->left.endedDown && !input_p->right.endedDown) {
             moveMod = 50;
             move = -1;
-        }
-
-        if (input_p->left.endedDown && !(move++ % moveMod)) {
-            newPos = subV2(newPos, V2(0.5f, 0.0f));
+        } else if (!(move++ % moveMod)) {
             moveMod = (moveMod <= 5) ? 3 : moveMod/2;
-        }
-        if (input_p->right.endedDown && !(move++ % moveMod)) {
-            newPos = addV2(newPos, V2(0.5f, 0.0f));
-            moveMod = (moveMod <= 5) ? 3 : moveMod/2;
+            if (input_p->left.endedDown)
+                newPos = subV2(newPos, V2(0.51f, 0.0f));
+            if (input_p->right.endedDown)
+                newPos = addV2(newPos, V2(0.51f, 0.0f));
         }
 
         if (IsCollide(&board, &dropping, newPos))
@@ -122,7 +155,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
                 // NOTE(david): draw the pieces
                 v4 color;
-                if (row_p->spots[x] != s_none) {
+                if (row_p->spots[x] != s_COUNT) {
                     filledCount += 1;
                     switch (row_p->spots[x]) {
                     case s_I:

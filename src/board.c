@@ -53,9 +53,9 @@ _SetType(struct board *board_p, struct piece *piece_p, u32 type)
     if (row_p[1] != NULL)
         row_p[0] = row_p[1]->prev;
     for (int i = 0; i < 4; i++) {
-        int rowCount = FloorToI32(piece_p->spots[i].y + 2);
+        int rowCount = FloorToI32(board_p->pieces[piece_p->type][piece_p->rot][i].y + 2);
         if (row_p[rowCount] != NULL)
-            row_p[rowCount]->spots[(i32)(piece_p->pos.x + piece_p->spots[i].x)] = type;
+            row_p[rowCount]->spots[(i32)(piece_p->pos.x + board_p->pieces[piece_p->type][piece_p->rot][i].x)] = type;
     }
 }
 
@@ -68,17 +68,17 @@ PlacePiece(struct board *board_p, struct piece *piece_p)
 void
 RemovePiece(struct board *board_p, struct piece *piece_p)
 {
-    _SetType(board_p, piece_p, s_none);
+    _SetType(board_p, piece_p, s_COUNT);
 }
 
 bool
 IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, piece_p->spots[i]);
+        v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
         if (check.x <= 0.0f || check.y <= 0.0f || check.x >= BOARD_WIDTH)
             return true;
-        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_none)
+        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)
             return true;
     }
 

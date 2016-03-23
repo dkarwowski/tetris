@@ -71,6 +71,16 @@ PushSize_(memory_stack *mStack_p, size_t size, bool clear)
     return result;
 }
 
+dk_inline void
+Copy(void *dest, void *src, size_t size)
+{
+    char *dest_p = (char *)dest;
+    char *src_p  = (char *)src;
+
+    while(size--)
+        *(dest_p++) = *(src_p++);
+}
+
 dk_inline local_stack
 BeginLocalStack(memory_stack *mStack_p)
 {
@@ -92,3 +102,6 @@ EndLocalStack(local_stack *lStack_p)
     ASSERT(mStack_p->count > 0);
     mStack_p->count--;
 }
+
+#define _GAME_H_
+#endif
