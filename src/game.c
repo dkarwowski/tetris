@@ -26,55 +26,6 @@ DK_RenderInlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
 
 #include "board.c"
 
-struct piece {
-    v2 pos;
-    v2 spots[4];
-    u32 type;
-};
-
-void
-_SetType(struct board *board_p, struct piece *piece_p, u32 type)
-{
-    struct row *row_p = GetRow(board_p, (u32)piece_p->pos.y);
-    for (int i = 0; i < 4; i++) {
-        if (fequal(piece_p->spots[i].y, 0.0f, 0.0001f)) {
-            row_p->spots[(i32)(piece_p->pos.x + piece_p->spots[i].x)] = type;
-        } else {
-            struct row *fix_p = row_p;
-            while (!fequal(fix_p->y, (piece_p->pos.y + piece_p->spots[i].y), 0.001f))
-                fix_p = (piece_p->spots[i].y < 0) ? row_p->prev : row_p->next;
-
-            fix_p->spots[(i32)(piece_p->pos.x + piece_p->spots[i].x)] = type;
-        }
-    }
-}
-
-void
-PlacePiece(struct board *board_p, struct piece *piece_p)
-{
-    _SetType(board_p, piece_p, piece_p->type);
-}
-
-void
-RemovePiece(struct board *board_p, struct piece *piece_p)
-{
-    _SetType(board_p, piece_p, s_none);
-}
-
-bool
-IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
-{
-    for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, piece_p->spots[i]);
-        if (check.x <= 0.0f || check.y <= 0.0f || check.x >= BOARD_WIDTH)
-            return true;
-        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_none)
-            return true;
-    }
-
-    return false;
-}
-
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
@@ -85,11 +36,13 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     static struct piece dropping = {
         .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 1},
         .spots = {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
-        .type = s_line
+        .type = s_I
     };
 
     static r32 dropSpeed = 0.02f;
     static u32 clearedRows = 0;
+    static i32 move = 0;
+    static i32 moveMod = 50;
 
     // Initialization
     if (!init) {
@@ -109,10 +62,19 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     { // Update
         RemovePiece(&board, &dropping);
         v2 newPos = dropping.pos;
-        if (input_p->left.endedDown)
-            newPos = subV2(newPos, mulV2(0.15f, V2(1.0f, 0.0f)));
-        if (input_p->right.endedDown)
-            newPos = addV2(newPos, mulV2(0.15f, V2(1.0f, 0.0f)));
+        if (!input_p->left.endedDown && !input_p->right.endedDown) {
+            moveMod = 50;
+            move = -1;
+        }
+
+        if (input_p->left.endedDown && !(move++ % moveMod)) {
+            newPos = subV2(newPos, V2(0.5f, 0.0f));
+            moveMod = (moveMod <= 5) ? 3 : moveMod/2;
+        }
+        if (input_p->right.endedDown && !(move++ % moveMod)) {
+            newPos = addV2(newPos, V2(0.5f, 0.0f));
+            moveMod = (moveMod <= 5) ? 3 : moveMod/2;
+        }
 
         if (IsCollide(&board, &dropping, newPos))
             newPos = dropping.pos;
@@ -163,23 +125,26 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 if (row_p->spots[x] != s_none) {
                     filledCount += 1;
                     switch (row_p->spots[x]) {
-                    case s_line:
+                    case s_I:
                         color = V4i(255, 0, 0, 255);
                         break;
                     case s_T:
                         color = V4i(0, 255, 0, 255);
                         break;
-                    case s_s:
+                    case s_S:
                         color = V4i(0, 0, 255, 255);
                         break;
-                    case s_z:
+                    case s_Z:
                         color = V4i(255, 255, 0, 255);
                         break;
-                    case s_l:
+                    case s_L:
                         color = V4i(0, 255, 255, 255);
                         break;
-                    case s_bl:
+                    case s_J:
                         color = V4i(255, 125, 0, 255);
+                        break;
+                    case s_O:
+                        color = V4i(0, 125, 255, 255);
                         break;
                     default:
                         color = V4i(255, 0, 255, 255);
