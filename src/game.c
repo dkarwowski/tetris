@@ -33,13 +33,8 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     static struct board board = {0};
     static bool init = false;
 
-    static struct piece dropping = {
-        .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 1},
-        .type = s_I,
-        .rot = 0,
-        .floorJump = false
-    };
-
+    static struct piece dropping;
+    static struct piece next;
     static r32 dropSpeed = 0.02f;
     static u32 clearedRows = 0;
     static i32 move = 0;
@@ -49,6 +44,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
     // Initialization
     if (!init) {
+        srand(time(NULL));
         board.first = &(board.rows[0]);
         board.last  = &(board.rows[BOARD_HEIGHT - 1]);
         for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -93,6 +89,19 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                                           {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}}};
         Copy(&(board.pieces), &boardPieces, sizeof(boardPieces));
 
+        dropping = (struct piece){
+            .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
+            .type = rand() % s_COUNT,
+            .rot = 0,
+            .floorJump = false
+        };
+        next = (struct piece) {
+            .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
+            .type = rand() % s_COUNT,
+            .rot = 0,
+            .floorJump = false
+        };
+
         PlacePiece(&board, &dropping);
 
         init = true;
@@ -109,7 +118,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         for (int i = 0; i < 2; i++) {
             for (int i = 0; i < 4; i++) {
                 v2 check = addV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
-                if ((check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH) ||
+                if ((check.x < 0.0f || check.y < 0.0f || check.x >= BOARD_WIDTH) ||
                         (GetRow(&board, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
                     if (board.pieces[dropping.type][dropping.rot][i].y < -0.0001f) {
                         if (!dropping.floorJump) {
@@ -144,9 +153,15 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
         newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 1.0f)));
         if (input_p->softDrop.endedDown)
             newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 2.0f)));
-        if ((!IsCollide(&board, &dropping, newPos)
-                && !fequal(newPos.y, dropping.pos.y, 0.001f)))
+        if (!IsCollideBottom(&board, &dropping, newPos)) {
             dropping.pos = newPos;
+        } else {
+            PlacePiece(&board, &dropping);
+            dropping = next;
+            next.type = rand() % s_COUNT;
+            next.rot = 0;
+            next.floorJump = false;
+        }
 
         PlacePiece(&board, &dropping);
     }

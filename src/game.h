@@ -1,6 +1,8 @@
 #ifndef _GAME_H_
 
 #include "main.h"
+#include <time.h>
+#include <stdlib.h>
 
 typedef struct {
     u8 *base;
