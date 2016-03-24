@@ -106,27 +106,24 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             lastRot = input_p->rotCW.halfCount;
         }
 
-        { // fix collision with wall jump
-            for (int i = 0; i < 2; i++) {
-                for (int i = 0; i < 4; i++) {
-                    v2 check = addV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
-                    if ((check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH) ||
-                            (GetRow(&board, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
-                        if (board.pieces[dropping.type][dropping.rot][i].y < -0.0001f) {
-                            if (!dropping.floorJump)
-                                dropping.floorJump = true;
-                            else {
-                                dropping.rot = (dropping.rot + 3) % 4;
-                                goto doneRot;
-                            }
+        for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 4; i++) {
+                v2 check = addV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
+                if ((check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH) ||
+                        (GetRow(&board, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
+                    if (board.pieces[dropping.type][dropping.rot][i].y < -0.0001f) {
+                        if (!dropping.floorJump) {
+                            dropping.floorJump = true;
+                        } else {
+                            dropping.rot = (dropping.rot + 3) % 4;
+                            break;
                         }
-                        dropping.pos = subV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
                     }
+                    dropping.pos = subV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
                 }
             }
         }
 
-doneRot:;
         v2 newPos = dropping.pos;
         // MOVE R/L
         if (!input_p->left.endedDown && !input_p->right.endedDown) {
@@ -147,7 +144,7 @@ doneRot:;
         newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 1.0f)));
         if (input_p->softDrop.endedDown)
             newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 2.0f)));
-        if ((!IsCollide(&board, &dropping, newPos) 
+        if ((!IsCollide(&board, &dropping, newPos)
                 && !fequal(newPos.y, dropping.pos.y, 0.001f)))
             dropping.pos = newPos;
 
