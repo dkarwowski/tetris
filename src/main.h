@@ -36,7 +36,8 @@ typedef struct {
             game_control right;
             game_control rotCW;
             game_control rotCCW;
-            game_control drop;
+            game_control hardDrop;
+            game_control softDrop;
 
 #ifdef DEBUG
             game_control reload;

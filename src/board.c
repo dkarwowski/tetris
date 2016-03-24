@@ -76,7 +76,7 @@ IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
         v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
-        if (check.x <= 0.0f || check.y <= 0.0f || check.x >= BOARD_WIDTH)
+        if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
             return true;
         if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)
             return true;

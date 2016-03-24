@@ -4,7 +4,7 @@ static void
 ProcessKeyboardInput(game_control *oControl_p, game_control *nControl_p, bool isDown)
 {
     nControl_p->endedDown = isDown;
-    nControl_p->halfCount += (!(oControl_p->endedDown) != !(nControl_p->endedDown)) ? 1 : 0;
+    nControl_p->halfCount += (oControl_p->endedDown != nControl_p->endedDown) ? 1 : 0;
 }
 
 static bool
@@ -25,11 +25,11 @@ HandleEvent(SDL_Event *event_p, game_input *oInput_p, game_input *nInput_p)
                 if (event_p->key.keysym.sym == SDLK_RIGHT)
                     ProcessKeyboardInput(&(oInput_p->right), &(nInput_p->right), isDown);
                 if (event_p->key.keysym.sym == SDLK_UP)
-                    ProcessKeyboardInput(&(oInput_p->rotCW), &(nInput_p->rotCCW), isDown);
+                    ProcessKeyboardInput(&(oInput_p->rotCW), &(nInput_p->rotCW), isDown);
                 if (event_p->key.keysym.sym == SDLK_DOWN)
-                    ProcessKeyboardInput(&(oInput_p->rotCCW), &(nInput_p->rotCW), isDown);
+                    ProcessKeyboardInput(&(oInput_p->softDrop), &(nInput_p->softDrop), isDown);
                 if (event_p->key.keysym.sym == SDLK_SPACE)
-                    ProcessKeyboardInput(&(oInput_p->drop), &(nInput_p->drop), isDown);
+                    ProcessKeyboardInput(&(oInput_p->hardDrop), &(nInput_p->hardDrop), isDown);
 
 #ifdef DEBUG
                 if (event_p->key.keysym.sym == SDLK_r)

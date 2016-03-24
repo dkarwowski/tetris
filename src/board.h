@@ -32,6 +32,7 @@ struct piece {
     v2 pos;
     u32 type;
     u8 rot;
+    bool floorJump;
 };
 
 #define s_I_0 {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}}
