@@ -37,6 +37,7 @@ struct piece {
 };
 
 #define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
+#define for_row_rev(iter, last) for(struct row *iter = last; iter; iter = iter->prev)
 
 #define _BOARD_H_
 #endif

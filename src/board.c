@@ -76,6 +76,8 @@ IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
         v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
+        if (check.y >= BOARD_HEIGHT)
+            continue;
         if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
             return true;
         if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)
@@ -96,4 +98,57 @@ IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
     }
 
     return false;
+}
+
+static v4
+DK_GetTypeColor(u8 type)
+{
+    v4 result;
+    switch (type) {
+    case s_I:
+        result = V4i(255, 0, 0, 255);
+        break;
+    case s_T:
+        result = V4i(0, 255, 0, 255);
+        break;
+    case s_S:
+        result = V4i(0, 0, 255, 255);
+        break;
+    case s_Z:
+        result = V4i(255, 255, 0, 255);
+        break;
+    case s_L:
+        result = V4i(0, 255, 255, 255);
+        break;
+    case s_J:
+        result = V4i(255, 125, 0, 255);
+        break;
+    case s_O:
+        result = V4i(0, 125, 255, 255);
+        break;
+    default:
+        result = V4i(255, 0, 255, 255);
+    }
+
+    return result;
+}
+
+static void
+DK_RenderSpot(SDL_Renderer *renderer_p, SDL_Rect rect, v4 color)
+{
+    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
+
+    SDL_Rect r2 = rect;
+    r2.x += 4;
+    r2.y += 4;
+    r2.w -= 8;
+    r2.h -= 8;
+    SDL_RenderFillRect(renderer_p, &r2);
+
+    v3 hsv = RGBtoHSV(color);
+    hsv.v *= 0.3f;
+    color = HSVtoRGB(hsv);
+
+    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
+    DK_RenderInlineRect(renderer_p, r2, 4);
 }

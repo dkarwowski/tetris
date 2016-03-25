@@ -38,6 +38,7 @@ typedef struct {
             game_control rotCCW;
             game_control hardDrop;
             game_control softDrop;
+            game_control pause;
 
 #ifdef DEBUG
             game_control reload;

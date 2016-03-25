@@ -109,6 +109,13 @@ EndLocalStack(local_stack *lStack_p)
 
 // GAME SHIT ---------------------------------------------------------------------------------------------------------
 
+enum {
+    G_NEW_GAME = 0,
+    G_PLAYING = 1,
+    G_PAUSED = 2,
+    G_PAUSED_WAIT = 3
+} G_state;
+
 struct game_state {
     struct board board;
     struct piece dropping;
@@ -121,6 +128,12 @@ struct game_state {
     i32 checkClear;
 
     i32 lastRotPress;
+    i32 lastDrop;
+
+    u64 gameType;
+
+    i32 pauseCount;
+    i32 lastPause;
 
     memory_stack stack;
 };
