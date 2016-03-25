@@ -29,35 +29,38 @@ DK_RenderInlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
 extern void
 UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *renderer_p)
 {
-    // the board
-    static struct board board = {0};
-    static bool init = false;
-
-    static struct piece dropping;
-    static struct piece next;
-    static r32 dropSpeed = 0.02f;
-    static u32 clearedRows = 0;
-    static i32 move = 0;
-    static i32 moveMod = 50;
-
-    static i32 lastRot = 0;
+    struct game_state *state_p = memory_p->permMem;
+    struct board *board_p = &(state_p->board);
+    struct piece *dropping_p = &(state_p->dropping);
 
     // Initialization
-    if (!init) {
+    if (!memory_p->isInitialized) {
+        InitMemStack(
+                &state_p->stack,
+                (void *)((iptr)memory_p->permMem + sizeof(struct game_state)),
+                memory_p->permMemSize - sizeof(struct game_state)
+        );
+
+        state_p->dropSpeed = 0.02f;
+        state_p->clearedRows = 0;
+        state_p->move = 0;
+        state_p->moveMod = 50;
+        state_p->lastRotPress = 0;
+        state_p->checkClear = -1;
+
         srand(time(NULL));
-        board.first = &(board.rows[0]);
-        board.last  = &(board.rows[BOARD_HEIGHT - 1]);
+        board_p->first = &(board_p->rows[0]);
+        board_p->last  = &(board_p->rows[BOARD_HEIGHT - 1]);
         for (int i = 0; i < BOARD_HEIGHT; i++) {
             if (i != 0) {
-                board.rows[i-1].next = &(board.rows[i]);
-                board.rows[i].prev = &(board.rows[i-1]);
+                board_p->rows[i-1].next = &(board_p->rows[i]);
+                board_p->rows[i].prev = &(board_p->rows[i-1]);
             }
-            board.rows[i].y = i;
+            board_p->rows[i].y = i;
 
             for (int j = 0; j < BOARD_WIDTH; j++)
-                board.rows[i].spots[j] = s_COUNT;
+                board_p->rows[i].spots[j] = s_COUNT;
         }
-
 
         v2 boardPieces[s_COUNT][4][4] = {{{{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
                                           {{0.0f, -2.0f}, {0.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}},
@@ -80,90 +83,106 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                                           {{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}},
                                           {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}}},
                                          {{{0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}, {-1.0f, -1.0f}},
-                                          {{-1.0f, -1.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
+                                          {{-1.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}},
                                           {{1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}},
                                           {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, -1.0f}}},
                                          {{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
                                           {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
                                           {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
                                           {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}}};
-        Copy(&(board.pieces), &boardPieces, sizeof(boardPieces));
+        Copy(&(board_p->pieces), &boardPieces, sizeof(boardPieces));
 
-        dropping = (struct piece){
+        state_p->dropping = (struct piece){
             .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
-            .type = rand() % s_COUNT,
+            .type = RandLimit(s_COUNT),
             .rot = 0,
             .floorJump = false
         };
-        next = (struct piece) {
+        state_p->next = (struct piece) {
             .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
-            .type = rand() % s_COUNT,
+            .type = RandLimit(s_COUNT),
             .rot = 0,
             .floorJump = false
         };
 
-        PlacePiece(&board, &dropping);
+        PlacePiece(board_p, dropping_p);
 
-        init = true;
+        memory_p->isInitialized = true;
     }
 
     { // Update
-        RemovePiece(&board, &dropping);
+        if (state_p->checkClear > -1) {
+            struct row *row_p = GetRow(board_p, state_p->checkClear)->next;
+            while (row_p && row_p->y > (state_p->checkClear - 3)) {
+                u32 filled = 0;
+                for (int i = 0; i < BOARD_WIDTH; i++)
+                    filled += (row_p->spots[i] != s_COUNT) ? 1 : 0;
+                
+                if (filled == BOARD_WIDTH)
+                    ClearRow(board_p, row_p, &state_p->clearedRows);
+
+                row_p = row_p->prev;
+            }
+        }
+
+        RemovePiece(board_p, dropping_p);
         // ROTATION
-        if (lastRot != input_p->rotCW.halfCount && input_p->rotCW.endedDown) {
-            dropping.rot = (dropping.rot + 1) % 4;
-            lastRot = input_p->rotCW.halfCount;
+        if (state_p->lastRotPress != input_p->rotCW.halfCount && input_p->rotCW.endedDown) {
+            dropping_p->rot = (dropping_p->rot + 1) % 4;
+            state_p->lastRotPress = input_p->rotCW.halfCount;
         }
 
         for (int i = 0; i < 2; i++) {
             for (int i = 0; i < 4; i++) {
-                v2 check = addV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
+                v2 check = addV2(dropping_p->pos, board_p->pieces[dropping_p->type][dropping_p->rot][i]);
                 if ((check.x < 0.0f || check.y < 0.0f || check.x >= BOARD_WIDTH) ||
-                        (GetRow(&board, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
-                    if (board.pieces[dropping.type][dropping.rot][i].y < -0.0001f) {
-                        if (!dropping.floorJump) {
-                            dropping.floorJump = true;
+                        (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
+                    if (board_p->pieces[dropping_p->type][dropping_p->rot][i].y < -0.0001f) {
+                        if (!dropping_p->floorJump) {
+                            dropping_p->floorJump = true;
                         } else {
-                            dropping.rot = (dropping.rot + 3) % 4;
+                            dropping_p->rot = (dropping_p->rot + 3) % 4;
                             break;
                         }
                     }
-                    dropping.pos = subV2(dropping.pos, board.pieces[dropping.type][dropping.rot][i]);
+                    dropping_p->pos = subV2(dropping_p->pos, board_p->pieces[dropping_p->type][dropping_p->rot][i]);
                 }
             }
         }
 
-        v2 newPos = dropping.pos;
+        v2 newPos = dropping_p->pos;
         // MOVE R/L
         if (!input_p->left.endedDown && !input_p->right.endedDown) {
-            moveMod = 50;
-            move = -1;
-        } else if (!(move++ % moveMod)) {
-            moveMod = (moveMod <= 5) ? 3 : moveMod/2;
+            state_p->moveMod = 50;
+            state_p->move = -1;
+        } else if (!(state_p->move++ % state_p->moveMod)) {
+            state_p->moveMod = (state_p->moveMod <= 5) ? 3 : state_p->moveMod/2;
             if (input_p->left.endedDown)
-                newPos = V2((r32)((int)(dropping.pos.x) - 1), dropping.pos.y);
+                newPos = V2((r32)((int)(dropping_p->pos.x) - 1), dropping_p->pos.y);
             if (input_p->right.endedDown)
-                newPos = V2((r32)((int)(dropping.pos.x) + 1), dropping.pos.y);
+                newPos = V2((r32)((int)(dropping_p->pos.x) + 1), dropping_p->pos.y);
         }
 
-        if (IsCollide(&board, &dropping, newPos))
-            newPos = dropping.pos;
+        if (IsCollide(board_p, dropping_p, newPos))
+            newPos = dropping_p->pos;
 
         // GRAVITY
-        newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 1.0f)));
+        newPos = subV2(newPos, mulV2(state_p->dropSpeed, V2(0.0f, 1.0f)));
         if (input_p->softDrop.endedDown)
-            newPos = subV2(newPos, mulV2(dropSpeed, V2(0.0f, 2.0f)));
-        if (!IsCollideBottom(&board, &dropping, newPos)) {
-            dropping.pos = newPos;
-        } else {
-            PlacePiece(&board, &dropping);
-            dropping = next;
-            next.type = rand() % s_COUNT;
-            next.rot = 0;
-            next.floorJump = false;
-        }
+            newPos = subV2(newPos, mulV2(state_p->dropSpeed, V2(0.0f, 2.0f)));
 
-        PlacePiece(&board, &dropping);
+        if (!IsCollideBottom(board_p, dropping_p, newPos)) {
+            dropping_p->pos = newPos;
+            PlacePiece(board_p, dropping_p);
+            state_p->checkClear = -1;
+        } else {
+            PlacePiece(board_p, dropping_p);
+            state_p->checkClear = FloorToI32(dropping_p->pos.y);
+
+            Copy(dropping_p, &(state_p->next), sizeof(struct piece));
+            state_p->next.type = RandLimit(s_COUNT);
+            state_p->next.rot = RandLimit(4);
+        }
     }
 
     { // Rendering
@@ -177,9 +196,9 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
         SDL_Rect rect = {
             .x = 20,
-            .y = (screenHeight - BLOCK_SIZE - 20) - (BLOCK_SIZE * (BOARD_HEIGHT - 1)),
+            .y = (screenHeight - BLOCK_SIZE - 20) - (BLOCK_SIZE * (BOARD_VHEIGHT - 1)),
             .w = BOARD_WIDTH * BLOCK_SIZE,
-            .h = BOARD_HEIGHT * BLOCK_SIZE
+            .h = BOARD_VHEIGHT * BLOCK_SIZE
         };
         DK_RenderOutlineRect(renderer_p, rect, 5);
 
@@ -189,9 +208,10 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             .w = BLOCK_SIZE,
             .h = BLOCK_SIZE
         };
-        bool toClear[BOARD_HEIGHT] = {0};
-        for_row(row_p, board.first) {
-            u32 filledCount = 0;
+        for_row(row_p, board_p->first) {
+            if (row_p->y >= BOARD_VHEIGHT)
+                break;
+
             for (int x = 0; x < BOARD_WIDTH; x++) {
                 if ((row_p->y + x) % 2)
                     SDL_SetRenderDrawColor(renderer_p, 175, 175, 175, 255);
@@ -202,7 +222,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 // NOTE(david): draw the pieces
                 v4 color;
                 if (row_p->spots[x] != s_COUNT) {
-                    filledCount += 1;
                     switch (row_p->spots[x]) {
                     case s_I:
                         color = V4i(255, 0, 0, 255);
@@ -249,14 +268,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             }
             rect.y -= BLOCK_SIZE;
             rect.x = 20;
-
-            if (filledCount == BOARD_HEIGHT)
-                toClear[((iptr)(row_p)-(iptr)&(board.rows))/sizeof(struct row)] = true;
-        }
-
-        for (int i = 0; i < BOARD_HEIGHT; i++) {
-            if (toClear[i])
-                ClearRow(&board, &(board.rows[i]), &clearedRows);
         }
 
         SDL_RenderPresent(renderer_p);

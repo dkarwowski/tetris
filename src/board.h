@@ -1,6 +1,7 @@
 #ifndef _BOARD_H_
 
-#define BOARD_HEIGHT 19
+#define BOARD_VHEIGHT 19
+#define BOARD_HEIGHT 21
 #define BOARD_WIDTH 10
 #define BLOCK_SIZE 55
 
@@ -34,13 +35,6 @@ struct piece {
     u8 rot;
     bool floorJump;
 };
-
-#define s_I_0 {{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}}
-#define s_T_0 {{-1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}}
-#define s_S_0 {{-1.0f, -1.0f}, {0.0f, -1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}}
-#define s_Z_0 {{-1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}, {1.0f, -1.0f}}
-#define s_L_0 {{1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}}
-#define s_J_0 {{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, -1.0f}}
 
 #define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
 

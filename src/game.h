@@ -1,8 +1,10 @@
 #ifndef _GAME_H_
 
 #include "main.h"
+#include "board.h"
 #include <time.h>
-#include <stdlib.h>
+
+// MEMORY STUFF ------------------------------------------------------------------------------------------------------
 
 typedef struct {
     u8 *base;
@@ -104,6 +106,24 @@ EndLocalStack(local_stack *lStack_p)
     ASSERT(mStack_p->count > 0);
     mStack_p->count--;
 }
+
+// GAME SHIT ---------------------------------------------------------------------------------------------------------
+
+struct game_state {
+    struct board board;
+    struct piece dropping;
+    struct piece next;
+
+    r32 dropSpeed;
+    u32 clearedRows;
+    i32 move;
+    i32 moveMod;
+    i32 checkClear;
+
+    i32 lastRotPress;
+
+    memory_stack stack;
+};
 
 #define _GAME_H_
 #endif

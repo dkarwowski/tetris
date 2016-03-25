@@ -37,7 +37,7 @@ ClearRow(struct board *board_p, struct row *row_p, u32 *clearedRows)
     }
 
     for (int i = 0; i < BOARD_WIDTH; i++)
-        row_p->spots[i] = 0;
+        row_p->spots[i] = s_COUNT;
 
     (*clearedRows)++;
 }
@@ -90,10 +90,8 @@ IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
         v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
-        if (check.y <= -0.0001f)
-            return true;
-        if ((board_p->pieces[piece_p->type][piece_p->rot][i].y <= -0.0001f)
-                && (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT))
+        if ((check.y <= -0.0001f) 
+                || (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT))
             return true;
     }
 
