@@ -113,7 +113,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     { // Update
         if (state_p->checkClear > -1) {
             struct row *row_p = GetRow(board_p, state_p->checkClear)->next;
-            while (row_p && row_p->y > (state_p->checkClear - 3)) {
+            while (row_p) {
                 u32 filled = 0;
                 for (int i = 0; i < BOARD_WIDTH; i++)
                     filled += (row_p->spots[i] != s_COUNT) ? 1 : 0;
@@ -132,7 +132,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             state_p->lastRotPress = input_p->rotCW.halfCount;
         }
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             for (int i = 0; i < 4; i++) {
                 v2 check = addV2(dropping_p->pos, board_p->pieces[dropping_p->type][dropping_p->rot][i]);
                 if ((check.x < 0.0f || check.y < 0.0f || check.x >= BOARD_WIDTH) ||
