@@ -120,6 +120,7 @@ struct game_state {
     struct board board;
     struct piece dropping;
     struct piece next;
+    struct piece hold;
 
     r32 dropSpeed;
     u32 clearedRows;
@@ -134,6 +135,9 @@ struct game_state {
 
     i32 pauseCount;
     i32 lastPause;
+
+    bool canHold;
+    i32 holdCount;
 
     memory_stack stack;
 };

@@ -32,6 +32,8 @@ HandleEvent(SDL_Event *event_p, game_input *oInput_p, game_input *nInput_p)
                     ProcessKeyboardInput(&(oInput_p->hardDrop), &(nInput_p->hardDrop), isDown);
                 if (event_p->key.keysym.sym == SDLK_p)
                     ProcessKeyboardInput(&(oInput_p->pause), &(nInput_p->pause), isDown);
+                if (event_p->key.keysym.sym == SDLK_c)
+                    ProcessKeyboardInput(&(oInput_p->hold), &(nInput_p->hold), isDown);
 
 #ifdef DEBUG
                 if (event_p->key.keysym.sym == SDLK_r)

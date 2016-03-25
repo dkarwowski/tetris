@@ -39,6 +39,7 @@ typedef struct {
             game_control hardDrop;
             game_control softDrop;
             game_control pause;
+            game_control hold;
 
 #ifdef DEBUG
             game_control reload;
