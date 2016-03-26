@@ -166,8 +166,8 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->score += 10 * (thisClear);
                     if (state_p->clearedRows >= state_p->clearedGoal) {
                         state_p->clearedRows = 0;
-                        state_p->dropSpeed += 0.01f;
-                        state_p->clearedGoal += 5;
+                        state_p->dropSpeed += 0.005f;
+                        state_p->clearedGoal += 2;
                     }
                 }
 
@@ -182,7 +182,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         state_p->dropping.type = state_p->next.type;
 
                         state_p->next.type = RandLimit(s_COUNT);
-                        state_p->next.rot = RandLimit(4);
                     }
                     state_p->hold.type = type;
                     state_p->holdCount = input_p->hold.halfCount;
@@ -262,7 +261,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
                     Copy(dropping_p, &(state_p->next), sizeof(struct piece));
                     state_p->next.type = RandLimit(s_COUNT);
-                    state_p->next.rot = RandLimit(4);
                     state_p->canHold = true;
                 }
             }
@@ -413,7 +411,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
                 char levelAndRows[10];
                 sprintf(levelAndRows, "%2d - %3d",
-                        (state_p->clearedGoal - 10)/5 + 1, (state_p->clearedGoal - state_p->clearedRows));
+                        (state_p->clearedGoal - 10)/2 + 1, (state_p->clearedGoal - state_p->clearedRows));
                 tSurface_p = TTF_RenderText_Blended(
                         state_p->font, levelAndRows, (SDL_Color){255, 255, 255, 255});
                 tTexture_p = SDL_CreateTextureFromSurface(renderer_p, tSurface_p);
