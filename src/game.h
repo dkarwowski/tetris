@@ -113,7 +113,8 @@ enum {
     G_NEW_GAME = 0,
     G_PLAYING = 1,
     G_PAUSED = 2,
-    G_PAUSED_WAIT = 3
+    G_PAUSED_WAIT = 3,
+    G_QUIT = 4
 } G_state;
 
 struct game_state {
@@ -122,8 +123,12 @@ struct game_state {
     struct piece next;
     struct piece hold;
 
-    r32 dropSpeed;
+    u64 score;
+    u32 clearedGoal;
     u32 clearedRows;
+    TTF_Font *font;
+
+    r32 dropSpeed;
     i32 move;
     i32 moveMod;
     i32 checkClear;

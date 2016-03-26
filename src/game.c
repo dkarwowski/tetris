@@ -1,4 +1,5 @@
 #include "game.h"
+#include "SDL2/SDL2_gfxPrimitives.h"
 
 static void
 DK_RenderOutlineRect(SDL_Renderer *renderer_p, SDL_Rect rect, int width)
@@ -40,6 +41,11 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 (void *)((iptr)memory_p->permMem + sizeof(struct game_state)),
                 memory_p->permMemSize - sizeof(struct game_state)
         );
+
+        state_p->font = TTF_OpenFont("DejaVuSans.ttf", 24);
+        if (state_p->font == NULL) {
+            printf("failed font: %s\n", TTF_GetError());
+        }
 
         srand(time(NULL));
 
@@ -127,6 +133,9 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             PlacePiece(board_p, dropping_p);
 
             state_p->canHold = true;
+            state_p->clearedGoal = 10;
+            state_p->clearedRows = 0;
+            state_p->score = 0;
 
             state_p->gameType = G_PAUSED;
         } break;
@@ -139,16 +148,26 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 }
 
                 if (state_p->checkClear > -1) {
+                    u8 thisClear = 0;
                     struct row *row_p = GetRow(board_p, state_p->checkClear)->next;
                     while (row_p) {
                         u32 filled = 0;
                         for (int i = 0; i < BOARD_WIDTH; i++)
                             filled += (row_p->spots[i] != s_COUNT) ? 1 : 0;
 
-                        if (filled == BOARD_WIDTH)
+                        if (filled == BOARD_WIDTH) {
                             ClearRow(board_p, row_p, &state_p->clearedRows);
+                            thisClear += 1;
+                        }
 
                         row_p = row_p->prev;
+                    }
+
+                    state_p->score += 10 * (thisClear);
+                    if (state_p->clearedRows >= state_p->clearedGoal) {
+                        state_p->clearedRows = 0;
+                        state_p->dropSpeed += 0.01f;
+                        state_p->clearedGoal += 5;
                     }
                 }
 
@@ -376,7 +395,35 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     }
                 }
 
-                SDL_RenderPresent(renderer_p);
+                // RENDER SCORE & LEFT TO CLEAR ----------------------------------------------------------------------
+                char score[6];
+                sprintf(score, "%5d", (i32)state_p->score);
+                SDL_Surface *tSurface_p = TTF_RenderText_Blended(
+                        state_p->font, score, (SDL_Color){255, 255, 255, 255});
+                SDL_Texture *tTexture_p = SDL_CreateTextureFromSurface(renderer_p, tSurface_p);
+                i32 tw, th;
+                SDL_QueryTexture(tTexture_p, NULL, NULL, &tw, &th);
+                SDL_Rect r = {
+                    .x = 20 + BOARD_WIDTH * BLOCK_SIZE + 20,
+                    .y = screenHeight - 20 - (BLOCK_SIZE * (BOARD_VHEIGHT - 16)),
+                    .w = tw + 10,
+                    .h = th + 10
+                };
+                SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
+
+                char levelAndRows[10];
+                sprintf(levelAndRows, "%2d - %3d",
+                        (state_p->clearedGoal - 10)/5 + 1, (state_p->clearedGoal - state_p->clearedRows));
+                tSurface_p = TTF_RenderText_Blended(
+                        state_p->font, levelAndRows, (SDL_Color){255, 255, 255, 255});
+                tTexture_p = SDL_CreateTextureFromSurface(renderer_p, tSurface_p);
+                SDL_QueryTexture(tTexture_p, NULL, NULL, &tw, &th);
+                r.y += 2*th;
+                r.w = tw + 10;
+                r.h = th + 10;
+                SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
+                SDL_FreeSurface(tSurface_p);
+                SDL_DestroyTexture(tTexture_p);
             }
         } break;
         case G_PAUSED:
@@ -387,7 +434,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
             SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
             SDL_RenderClear(renderer_p);
-            SDL_RenderPresent(renderer_p);
         } break;
         case G_PAUSED_WAIT:
         {
@@ -399,11 +445,11 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
 
             SDL_SetRenderDrawColor(renderer_p, 255, 255, 0, 255);
             SDL_RenderClear(renderer_p);
-            SDL_RenderPresent(renderer_p);
         } break;
         default:
         {
         }
     }
 
+    SDL_RenderPresent(renderer_p);
 }

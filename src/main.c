@@ -197,6 +197,7 @@ main(int argc, char *argv[])
 
         FPSmanager fpsManager;
         SDL_initFramerate(&fpsManager);
+        SDL_setFramerate(&fpsManager, GOAL_FPS);
 
         game_memory memory = {0};
         memory.permMemSize = Megabytes(64);
