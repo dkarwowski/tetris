@@ -172,7 +172,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     while (row_p) {
                         u32 filled = 0;
                         for (int i = 0; i < BOARD_WIDTH; i++)
-                            filled += (row_p->spots[i] != s_COUNT) ? 1 : 0;
+                            filled += (row_p->spots[i] < s_COUNT) ? 1 : 0;
 
                         if (filled == BOARD_WIDTH) {
                             ClearRow(board_p, row_p, &state_p->clearedRows);
