@@ -14,7 +14,8 @@ enum shapes {
     s_J = 5,
     s_O = 6,
 
-    s_COUNT = 7
+    s_COUNT = 7,
+    s_GHOST = 8
 };
 
 struct row {

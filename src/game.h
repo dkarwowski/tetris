@@ -128,6 +128,9 @@ struct game_state {
     u32 clearedRows;
     TTF_Font *font;
 
+    u32 droppingLand;
+    v2 ghostPos;
+
     r32 dropSpeed;
     i32 move;
     i32 moveMod;

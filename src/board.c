@@ -1,6 +1,6 @@
 #include "board.h"
 
-struct row *
+static struct row *
 GetRow(struct board *board_p, u32 rowID)
 {
     ASSERT(0 <= rowID && rowID < BOARD_HEIGHT);
@@ -12,7 +12,7 @@ GetRow(struct board *board_p, u32 rowID)
     return NULL;
 }
 
-void
+static void
 ClearRow(struct board *board_p, struct row *row_p, u32 *clearedRows)
 {
     if (row_p->prev)
@@ -42,7 +42,7 @@ ClearRow(struct board *board_p, struct row *row_p, u32 *clearedRows)
     (*clearedRows)++;
 }
 
-void
+static void
 _SetType(struct board *board_p, struct piece *piece_p, u32 type)
 {
     struct row *row_p[4];
@@ -59,19 +59,37 @@ _SetType(struct board *board_p, struct piece *piece_p, u32 type)
     }
 }
 
-void
+static void
 PlacePiece(struct board *board_p, struct piece *piece_p)
 {
     _SetType(board_p, piece_p, piece_p->type);
 }
 
-void
+static void
 RemovePiece(struct board *board_p, struct piece *piece_p)
 {
     _SetType(board_p, piece_p, s_COUNT);
 }
 
-bool
+static void
+RemoveGhost(struct board *board_p, struct piece *piece_p, v2 pos)
+{
+    v2 tempHold = piece_p->pos;
+    piece_p->pos = pos;
+    _SetType(board_p, piece_p, s_COUNT);
+    piece_p->pos = tempHold;
+}
+
+static void
+PlaceGhost(struct board *board_p, struct piece *piece_p, v2 pos)
+{
+    v2 tempHold = piece_p->pos;
+    piece_p->pos = pos;
+    _SetType(board_p, piece_p, s_GHOST);
+    piece_p->pos = tempHold;
+}
+
+static bool
 IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
@@ -80,20 +98,20 @@ IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
             continue;
         if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
             return true;
-        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)
+        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] < s_COUNT)
             return true;
     }
 
     return false;
 }
 
-bool
+static bool
 IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
         v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
         if ((check.y <= -0.0001f) 
-                || (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT))
+                || (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] < s_COUNT))
             return true;
     }
 
@@ -127,7 +145,7 @@ DK_GetTypeColor(u8 type)
         result = V4i(0, 125, 255, 255);
         break;
     default:
-        result = V4i(255, 0, 255, 255);
+        result = V4i(50, 50, 50, 255);
     }
 
     return result;
