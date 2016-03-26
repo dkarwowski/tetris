@@ -1,4 +1,5 @@
 #include "main.h"
+#include <SDL2/SDL2_framerate.h>
 
 static void
 ProcessKeyboardInput(game_control *oControl_p, game_control *nControl_p, bool isDown)
@@ -194,6 +195,9 @@ main(int argc, char *argv[])
     if (InitializeWindowAndRenderer(&window_p, &renderer_p)) {
         game_lib gameLib = {0};
 
+        FPSmanager fpsManager;
+        SDL_initFramerate(&fpsManager);
+
         game_memory memory = {0};
         memory.permMemSize = Megabytes(64);
         memory.tempMemSize = Megabytes(256);
@@ -213,10 +217,6 @@ main(int argc, char *argv[])
 
         LoadGame(&gameLib);
 
-        u64 prevCount = SDL_GetPerformanceCounter();
-        u64 currCount = SDL_GetPerformanceCounter();
-        u64 countPerSec = SDL_GetPerformanceFrequency();
-
         bool done = false;
         while (!done) {
             oInput = nInput;
@@ -227,8 +227,7 @@ main(int argc, char *argv[])
             }
 
             if (nInput.paused) {
-                currCount = SDL_GetPerformanceCounter();
-                SDL_Delay(1000.0/GOAL_FPS);
+                SDL_framerateDelay(&fpsManager);
                 continue;
             }
 
@@ -237,17 +236,8 @@ main(int argc, char *argv[])
                 LoadGame(&gameLib);
 #endif
 
-            prevCount = currCount;
-            currCount = SDL_GetPerformanceCounter();
-
-            SDL_Delay((1000.0/GOAL_FPS - 
-                        (((currCount - prevCount) > 0) 
-                         ? 1000*((currCount - prevCount)/countPerSec)
-                         : 1000.0f/GOAL_FPS))*0.50f);
-            do {
-                currCount = SDL_GetPerformanceCounter();
-            } while (countPerSec/(currCount - prevCount) > GOAL_FPS);
-            nInput.dt = (double)(currCount - prevCount)/countPerSec;
+            SDL_framerateDelay(&fpsManager);
+            nInput.dt = (r64)(1.0f/(SDL_getFramerate(&fpsManager)));
 
             if (gameLib.UpdateAndRender_fp)
                 gameLib.UpdateAndRender_fp(&memory, &nInput, renderer_p);
