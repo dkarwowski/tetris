@@ -129,19 +129,16 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
                 .type = RandLimit(s_COUNT),
                 .rot = 0,
-                .floorJump = false
             };
             state_p->next = (struct piece) {
                 .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
                 .type = RandLimit(s_COUNT),
                 .rot = 0,
-                .floorJump = false
             };
             state_p->hold = (struct piece) {
                 .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
                 .type = s_COUNT,
                 .rot = 0,
-                .floorJump = false
             };
 
             PlacePiece(board_p, dropping_p);
@@ -197,9 +194,11 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     if (state_p->hold.type != s_COUNT) {
                         state_p->dropping.type = state_p->hold.type;
                         state_p->dropping.pos = state_p->hold.pos;
+                        state_p->dropping.rot = state_p->hold.rot;
                     } else {
                         state_p->dropping.pos = state_p->next.pos;
                         state_p->dropping.type = state_p->next.type;
+                        state_p->dropping.rot = state_p->next.rot;
 
                         state_p->next.type = RandLimit(s_COUNT);
                     }
@@ -220,14 +219,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         v2 check = addV2(dropping_p->pos, board_p->pieces[dropping_p->type][dropping_p->rot][i]);
                         if ((check.x < 0.0f || check.y < 0.0f || check.x >= BOARD_WIDTH) ||
                                 (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
-                            if (board_p->pieces[dropping_p->type][dropping_p->rot][i].y < -0.0001f) {
-                                if (!dropping_p->floorJump) {
-                                    dropping_p->floorJump = true;
-                                } else {
-                                    dropping_p->rot = (dropping_p->rot + 3) % 4;
-                                    break;
-                                }
-                            }
                             dropping_p->pos = subV2(dropping_p->pos,
                                     board_p->pieces[dropping_p->type][dropping_p->rot][i]);
                         }
@@ -240,7 +231,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->moveMod = 50;
                     state_p->move = -1;
                 } else if (!(state_p->move++ % state_p->moveMod)) {
-                    state_p->moveMod = (state_p->moveMod <= 5) ? 3 : state_p->moveMod/2;
+                    state_p->moveMod = (state_p->moveMod <= 5) ? 3 : state_p->moveMod/3;
                     if (input_p->left.endedDown)
                         newPos = V2((r32)((int)(dropping_p->pos.x) - 1), dropping_p->pos.y);
                     if (input_p->right.endedDown)
@@ -250,7 +241,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 if (IsCollide(board_p, dropping_p, newPos))
                     newPos = dropping_p->pos;
 
-                // GRAVITY
+                // GRAVITY -------------------------------------------------------------------------------------------
                 newPos = subV2(newPos, mulV2(state_p->dropSpeed, V2(0.0f, 1.0f)));
                 if (input_p->softDrop.endedDown)
                     newPos = subV2(newPos, mulV2(state_p->dropSpeed, V2(0.0f, 2.0f)));

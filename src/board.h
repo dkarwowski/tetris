@@ -34,7 +34,6 @@ struct piece {
     v2 pos;
     u32 type;
     u8 rot;
-    bool floorJump;
 };
 
 #define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
