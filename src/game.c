@@ -430,6 +430,8 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     .h = th + 10
                 };
                 SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
+                SDL_FreeSurface(tSurface_p);
+                SDL_DestroyTexture(tTexture_p);
 
                 char levelAndRows[10];
                 sprintf(levelAndRows, "%2d - %3d",
