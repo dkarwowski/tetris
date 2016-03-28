@@ -31,7 +31,7 @@ static v2
 GetDropPos(struct game_state *state_p)
 {
     i32 dropRow = 0;
-    for_row_rev(row_p, state_p->board.last->prev) {
+    for_row_rev(row_p, GetRow(&(state_p->board), (int)state_p->dropping.pos.y)) {
         if (!IsCollide(&(state_p->board), &(state_p->dropping), V2(state_p->dropping.pos.x, (r32)row_p->y)))
             continue;
         dropRow = row_p->y + 1;
