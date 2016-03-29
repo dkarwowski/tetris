@@ -131,7 +131,8 @@ enum {
     G_PLAYING = 1,
     G_PAUSED = 2,
     G_PAUSED_WAIT = 3,
-    G_QUIT = 4
+    G_QUIT = 4,
+    G_PAUSED_PLAY = 5
 } G_state;
 
 struct game_state {

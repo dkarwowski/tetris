@@ -54,6 +54,7 @@ RenderBoardPosDim(SDL_Renderer *renderer_p, struct board *board_p, v2 pos, v2 di
         .w = dim.x * BLOCK_SIZE,
         .h = dim.y * BLOCK_SIZE
     };
+    SDL_SetRenderDrawColor(renderer_p, 0, 0, 0, 255);
     DK_RenderOutlineRect(renderer_p, rect, 5);
 
     rect = (SDL_Rect) {
@@ -110,4 +111,83 @@ DK_RenderText(SDL_Renderer *renderer_p, TTF_Font *font_p, const char *str, v2 po
     SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
     SDL_FreeSurface(tSurface_p);
     SDL_DestroyTexture(tTexture_p);
+}
+
+static void
+DK_RenderTextCenter(SDL_Renderer *renderer_p, TTF_Font *font_p, const char *str, v2 pos)
+{
+    int screenHeight;
+    SDL_RenderGetLogicalSize(renderer_p, NULL, &screenHeight);
+
+    SDL_Surface *tSurface_p = TTF_RenderText_Blended(font_p, str, (SDL_Color){0, 0, 0, 255});
+    SDL_Texture *tTexture_p = SDL_CreateTextureFromSurface(renderer_p, tSurface_p);
+    i32 tw, th;
+    SDL_QueryTexture(tTexture_p, NULL, NULL, &tw, &th);
+    SDL_Rect r = {
+        .x = pos.x - tw/2,
+        .y = screenHeight - pos.y - th - th/2,
+        .w = tw,
+        .h = th
+    };
+    SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
+    SDL_FreeSurface(tSurface_p);
+    SDL_DestroyTexture(tTexture_p);
+}
+
+static void
+DK_RenderTextRight(SDL_Renderer *renderer_p, TTF_Font *font_p, const char *str, v2 pos)
+{
+    int screenHeight;
+    SDL_RenderGetLogicalSize(renderer_p, NULL, &screenHeight);
+
+    SDL_Surface *tSurface_p = TTF_RenderText_Blended(font_p, str, (SDL_Color){255, 255, 255, 255});
+    SDL_Texture *tTexture_p = SDL_CreateTextureFromSurface(renderer_p, tSurface_p);
+    i32 tw, th;
+    SDL_QueryTexture(tTexture_p, NULL, NULL, &tw, &th);
+    SDL_Rect r = {
+        .x = pos.x - tw,
+        .y = screenHeight - pos.y - th,
+        .w = tw,
+        .h = th
+    };
+    SDL_RenderCopy(renderer_p, tTexture_p, NULL, &r);
+    SDL_FreeSurface(tSurface_p);
+    SDL_DestroyTexture(tTexture_p);
+}
+
+static void
+DK_RenderGame(SDL_Renderer *renderer_p, struct game_state *state_p)
+{
+    SDL_SetRenderDrawColor(renderer_p, 100, 100, 140, 255);
+    SDL_RenderClear(renderer_p);
+
+    int screenHeight;
+    SDL_RenderGetLogicalSize(renderer_p, NULL, &screenHeight);
+
+    // RENDER DROPPING -----------------------------------------------------------------------------------
+    RenderBoardPos(renderer_p, &(state_p->board), V2(20, 20));
+
+    // RENDER PREVIEW ------------------------------------------------------------------------------------
+    RenderBoardPosDim(
+            renderer_p, 
+            &(state_p->nextView), 
+            V2(40 + (BOARD_WIDTH*BLOCK_SIZE), 20 + 14 * BLOCK_SIZE), 
+            V2(5,5));
+
+    // RENDER HOLD ---------------------------------------------------------------------------------------
+    RenderBoardPosDim(
+            renderer_p, 
+            &(state_p->holdView), 
+            V2(40 + (BOARD_WIDTH*BLOCK_SIZE), 20 + 8 * BLOCK_SIZE), 
+            V2(5,5));
+
+    // RENDER SCORE & LEFT TO CLEAR ----------------------------------------------------------------------
+    char score[15];
+    sprintf(score, "%5d", (i32)state_p->score);
+    DK_RenderTextRight(renderer_p, state_p->font, score, V2i(185 + (BOARD_WIDTH*BLOCK_SIZE), 200));
+
+    char temp[15];
+    sprintf(temp, "%2d - %3d",
+            (state_p->clearedGoal - 10)/2 + 1, (state_p->clearedGoal - state_p->clearedRows));
+    DK_RenderTextRight(renderer_p, state_p->font, temp, V2i(185 + (BOARD_WIDTH*BLOCK_SIZE), 150));
 }

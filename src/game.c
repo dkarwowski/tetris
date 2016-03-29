@@ -32,7 +32,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 memory_p->permMemSize - sizeof(struct game_state)
         );
 
-        state_p->font = TTF_OpenFont("DejaVuSans.ttf", 60);
+        state_p->font = TTF_OpenFont("DejaVuSans.ttf", 35);
         if (state_p->font == NULL) {
             printf("failed font: %s\n", TTF_GetError());
         }
@@ -48,7 +48,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
     switch (state_p->gameType) {
         case G_NEW_GAME:
         {
-            state_p->dropSpeed = 0.02f;
+            state_p->dropSpeed = 0.05f;
             state_p->clearedRows = 0;
             state_p->move = 0;
             state_p->moveMod = 50;
@@ -98,7 +98,12 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             state_p->ghostPos = V2(dropping_p->pos.x, dropPos.y);
             PlaceGhost(board_p, dropping_p, state_p->ghostPos);
 
-            state_p->gameType = G_PAUSED;
+            DK_RenderGame(renderer_p, state_p);
+            DK_RenderTextCenter(
+                    renderer_p, state_p->font, "New Game", V2(20+(BOARD_WIDTH*BLOCK_SIZE/2), SCREEN_HEIGHT));
+            SDL_RenderPresent(renderer_p);
+
+            state_p->gameType = G_PAUSED_WAIT;
         } break;
         case G_PLAYING:
         {
@@ -240,66 +245,43 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             }
 
             { // Rendering
-                SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
-                SDL_RenderClear(renderer_p);
+                DK_RenderGame(renderer_p, state_p);
 
-                int screenHeight;
-                SDL_RenderGetLogicalSize(renderer_p, NULL, &screenHeight);
-
-                SDL_SetRenderDrawColor(renderer_p, 0, 0, 0, 255);
-
-                // RENDER DROPPING -----------------------------------------------------------------------------------
-                RenderBoardPos(renderer_p, board_p, V2(20, 20));
-
-                // RENDER PREVIEW ------------------------------------------------------------------------------------
-                RenderBoardPosDim(
-                        renderer_p, 
-                        &(state_p->nextView), 
-                        V2(40 + (BOARD_WIDTH*BLOCK_SIZE), 20 + 14 * BLOCK_SIZE), 
-                        V2(5,5));
-
-                // RENDER HOLD ---------------------------------------------------------------------------------------
-                RenderBoardPosDim(
-                        renderer_p, 
-                        &(state_p->holdView), 
-                        V2(40 + (BOARD_WIDTH*BLOCK_SIZE), 20 + 8 * BLOCK_SIZE), 
-                        V2(5,5));
-
-                // RENDER SCORE & LEFT TO CLEAR ----------------------------------------------------------------------
-                char score[6];
-                sprintf(score, "%5d", (i32)state_p->score);
-                DK_RenderText(renderer_p, state_p->font, score, V2i(10 + (BOARD_WIDTH*BLOCK_SIZE), 200));
-
-                char levelAndRows[10];
-                sprintf(levelAndRows, "%2d - %3d",
-                        (state_p->clearedGoal - 10)/2 + 1, (state_p->clearedGoal - state_p->clearedRows));
-                DK_RenderText(renderer_p, state_p->font, levelAndRows, V2i(10 * (BOARD_WIDTH*BLOCK_SIZE), 200));
+                SDL_RenderPresent(renderer_p);
             }
         } break;
         case G_PAUSED:
         {
-            if (input_p->pause.endedDown && state_p->lastPause != input_p->pause.halfCount) {
-                state_p->gameType = G_PAUSED_WAIT;
-            }
+            DK_RenderGame(renderer_p, state_p);
 
-            SDL_SetRenderDrawColor(renderer_p, 255, 0, 255, 255);
-            SDL_RenderClear(renderer_p);
+            DK_RenderTextCenter(
+                    renderer_p, state_p->font, "Paused", V2(20+(BOARD_WIDTH*BLOCK_SIZE/2), SCREEN_HEIGHT));
+            state_p->gameType = G_PAUSED_WAIT;
+
+            SDL_RenderPresent(renderer_p);
         } break;
         case G_PAUSED_WAIT:
+        {
+            if (input_p->pause.endedDown && state_p->lastPause != input_p->pause.halfCount) {
+                state_p->gameType = G_PAUSED_PLAY;
+            }
+        } break;
+        case G_PAUSED_PLAY:
         {
             if (state_p->pauseCount++ > 60) {
                 state_p->gameType = G_PLAYING;
                 state_p->lastPause = input_p->pause.halfCount;
                 state_p->pauseCount = 0;
             }
+            char count[6];
+            sprintf(count, "%2d...", 10 - (i32)(state_p->pauseCount/6));
 
-            SDL_SetRenderDrawColor(renderer_p, 255, 255, 0, 255);
-            SDL_RenderClear(renderer_p);
+            DK_RenderGame(renderer_p, state_p);
+            DK_RenderTextCenter(renderer_p, state_p->font, count, V2(20+(BOARD_WIDTH*BLOCK_SIZE/2), SCREEN_HEIGHT));
+            SDL_RenderPresent(renderer_p);
         } break;
         default:
         {
         }
     }
-
-    SDL_RenderPresent(renderer_p);
 }
