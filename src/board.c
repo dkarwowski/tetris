@@ -53,9 +53,9 @@ _SetType(struct board *board_p, struct piece *piece_p, u32 type)
     if (row_p[1] != NULL)
         row_p[0] = row_p[1]->prev;
     for (int i = 0; i < 4; i++) {
-        int rowCount = FloorToI32(board_p->pieces[piece_p->type][piece_p->rot][i].y + 2);
+        int rowCount = FloorToI32(boardPieces[piece_p->type][piece_p->rot][i].y + 2);
         if (row_p[rowCount] != NULL)
-            row_p[rowCount]->spots[(i32)(piece_p->pos.x + board_p->pieces[piece_p->type][piece_p->rot][i].x)] = type;
+            row_p[rowCount]->spots[(i32)(piece_p->pos.x + boardPieces[piece_p->type][piece_p->rot][i].x)] = type;
     }
 }
 
@@ -72,6 +72,15 @@ RemovePiece(struct board *board_p, struct piece *piece_p)
 }
 
 static void
+PlaceGhost(struct board *board_p, struct piece *piece_p, v2 pos)
+{
+    v2 tempHold = piece_p->pos;
+    piece_p->pos = pos;
+    _SetType(board_p, piece_p, s_GHOST);
+    piece_p->pos = tempHold;
+}
+
+static void
 RemoveGhost(struct board *board_p, struct piece *piece_p, v2 pos)
 {
     v2 tempHold = piece_p->pos;
@@ -81,19 +90,25 @@ RemoveGhost(struct board *board_p, struct piece *piece_p, v2 pos)
 }
 
 static void
-PlaceGhost(struct board *board_p, struct piece *piece_p, v2 pos)
+PlaceView(struct board *board_p, struct piece *piece_p)
 {
     v2 tempHold = piece_p->pos;
-    piece_p->pos = pos;
-    _SetType(board_p, piece_p, s_GHOST);
+    piece_p->pos = V2(2.0f, 2.0f);
+    _SetType(board_p, piece_p, piece_p->type);
     piece_p->pos = tempHold;
+}
+
+static void
+RemoveView(struct board *board_p, struct piece *piece_p)
+{
+    RemoveGhost(board_p, piece_p, V2(2.0f, 2.0f));
 }
 
 static bool
 IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
+        v2 check = addV2(newPos, boardPieces[piece_p->type][piece_p->rot][i]);
         if (check.y >= BOARD_HEIGHT)
             continue;
         if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
@@ -109,7 +124,7 @@ static bool
 IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, board_p->pieces[piece_p->type][piece_p->rot][i]);
+        v2 check = addV2(newPos, boardPieces[piece_p->type][piece_p->rot][i]);
         if ((check.y <= -0.0001f) 
                 || (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] < s_COUNT))
             return true;

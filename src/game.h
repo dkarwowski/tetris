@@ -75,6 +75,23 @@ PushSize_(memory_stack *mStack_p, size_t size, bool clear)
     return result;
 }
 
+dk_inline void *
+PushCopy_(memory_stack *mStack_p, void *base_p, size_t size)
+{
+    ASSERT((mStack_p->used + size) <= mStack_p->size);
+
+    char *dest_p = (char *)(mStack_p->base + mStack_p->used);
+    char *src_p  = (char *)base_p;
+
+    while (size--) {
+        *(dest_p++) = *(src_p++);
+    }
+
+    void *result = mStack_p->base + mStack_p->used;
+    mStack_p->used += size;
+    return result;
+}
+
 dk_inline void
 Copy(void *dest, void *src, size_t size)
 {
@@ -119,6 +136,8 @@ enum {
 
 struct game_state {
     struct board board;
+    struct board nextView;
+    struct board holdView;
     struct piece dropping;
     struct piece next;
     struct piece hold;
