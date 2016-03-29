@@ -1,5 +1,23 @@
 #include "board.h"
 
+void
+BoardInitialize(struct board *board_p)
+{
+    board_p->first = &(board_p->rows[0]);
+    board_p->last  = &(board_p->rows[BOARD_HEIGHT - 1]);
+
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        if (i != 0) {
+            board_p->rows[i-1].next = &(board_p->rows[i]);
+            board_p->rows[i].prev = &(board_p->rows[i-1]);
+        }
+        board_p->rows[i].y = i;
+
+        for (int j = 0; j < BOARD_WIDTH; j++)
+            board_p->rows[i].spots[j] = s_COUNT;
+    }
+}
+
 static struct row *
 GetRow(struct board *board_p, u32 rowID)
 {
@@ -164,24 +182,4 @@ DK_GetTypeColor(u8 type)
     }
 
     return result;
-}
-
-static void
-DK_RenderSpot(SDL_Renderer *renderer_p, SDL_Rect rect, v4 color)
-{
-    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
-
-    SDL_Rect r2 = rect;
-    r2.x += 4;
-    r2.y += 4;
-    r2.w -= 8;
-    r2.h -= 8;
-    SDL_RenderFillRect(renderer_p, &r2);
-
-    v3 hsv = RGBtoHSV(color);
-    hsv.v *= 0.3f;
-    color = HSVtoRGB(hsv);
-
-    SDL_SetRenderDrawColor(renderer_p, color.r, color.g, color.b, color.a);
-    DK_RenderInlineRect(renderer_p, r2, 4);
 }

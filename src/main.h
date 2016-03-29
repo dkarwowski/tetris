@@ -18,7 +18,7 @@
 #define Megabytes(x) (Kilobytes(x) * 1024)
 #define Gigabytes(x) (Megabytes(x) * 1024)
 
-#define SCREEN_WIDTH 960
+#define SCREEN_WIDTH 450
 #define SCREEN_HEIGHT 540
 
 typedef struct {
