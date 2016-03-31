@@ -145,6 +145,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         state_p->dropping.type = state_p->hold.type;
                         state_p->dropping.pos = state_p->hold.pos;
                         state_p->dropping.rot = state_p->hold.rot;
+                        RemoveView(&(state_p->holdView), &(state_p->hold));
                     } else {
                         state_p->dropping.pos = state_p->next.pos;
                         state_p->dropping.type = state_p->next.type;
@@ -154,7 +155,6 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         state_p->next.type = RandLimit(s_COUNT);
                         PlaceView(&(state_p->nextView), &(state_p->next));
                     }
-                    RemoveView(&(state_p->holdView), &(state_p->hold));
                     state_p->hold.type = type;
                     state_p->holdCount = input_p->hold.halfCount;
                     PlaceView(&(state_p->holdView), &(state_p->hold));

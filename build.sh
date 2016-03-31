@@ -5,7 +5,7 @@ APPNAME=tetris
 CFLAGS="-fPIC -I/usr/local/include/SDL2 -D_THREAD_SAFE"
 CFLAGS="$CFLAGS -Wall -Wno-missing-braces"
 CFLAGS="$CFLAGS -O0 -DDEBUG -g -Wno-unused-function"
-LIBS="-lm -L/usr/local/lib -lSDL2 -lSDL2_ttf -lSDL2_gfx"
+LIBS="-lm -L/usr/local/lib -lSDL2 -lSDL2_ttf"
 
 if [[ "$(pwd)" == *"src" ]]
 then

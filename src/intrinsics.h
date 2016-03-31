@@ -1,6 +1,5 @@
 #ifndef _INTRINSICS_H_
 #define _INTRINSICS_H_
-#include "common.h"
 #include <stdlib.h>
 
 dk_inline i32
