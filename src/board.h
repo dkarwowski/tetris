@@ -47,15 +47,8 @@ static v2 boardPieces[s_COUNT][4][4] = {{{{-2.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 0
                                          {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}},
                                          {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}}};
 
-struct row {
-    u8 spots[BOARD_WIDTH];
-    struct row *next, *prev;
-    u32 y;
-};
-
 struct board {
-    struct row rows[BOARD_HEIGHT];
-    struct row *first, *last;
+    u8 pos[BOARD_HEIGHT][BOARD_WIDTH];
 };
 
 struct piece {
@@ -63,9 +56,6 @@ struct piece {
     u32 type;
     u8 rot;
 };
-
-#define for_row(iter, first) for(struct row *iter = first; iter; iter = iter->next)
-#define for_row_rev(iter, last) for(struct row *iter = last; iter; iter = iter->prev)
 
 #define _BOARD_H_
 #endif

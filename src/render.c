@@ -63,8 +63,8 @@ RenderBoardPosDim(SDL_Renderer *renderer_p, struct board *board_p, v2 pos, v2 di
         .w = BLOCK_SIZE,
         .h = BLOCK_SIZE
     };
-    for_row(row_p, board_p->first) {
-        if (row_p->y >= dim.y)
+    for (int y = 0; y < BOARD_HEIGHT; y++) {
+        if (y >= dim.y)
             break;
 
         for (int x = 0; x < dim.x; x++) {
@@ -75,8 +75,8 @@ RenderBoardPosDim(SDL_Renderer *renderer_p, struct board *board_p, v2 pos, v2 di
             DK_RenderInlineRect(renderer_p, rect, 2);
 
             // NOTE(david): draw the pieces
-            if (row_p->spots[x] != s_COUNT) {
-                DK_RenderSpot(renderer_p, rect, DK_GetTypeColor(row_p->spots[x]));
+            if (board_p->pos[y][x] != s_COUNT) {
+                DK_RenderSpot(renderer_p, rect, DK_GetTypeColor(board_p->pos[y][x]));
             }
 
             rect.x += BLOCK_SIZE;

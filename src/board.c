@@ -3,77 +3,46 @@
 void
 BoardInitialize(struct board *board_p)
 {
-    board_p->first = &(board_p->rows[0]);
-    board_p->last  = &(board_p->rows[BOARD_HEIGHT - 1]);
-
     for (int i = 0; i < BOARD_HEIGHT; i++) {
-        if (i != 0) {
-            board_p->rows[i-1].next = &(board_p->rows[i]);
-            board_p->rows[i].prev = &(board_p->rows[i-1]);
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            board_p->pos[i][j] = s_COUNT;
         }
-        board_p->rows[i].y = i;
-
-        for (int j = 0; j < BOARD_WIDTH; j++)
-            board_p->rows[i].spots[j] = s_COUNT;
     }
 }
 
-static struct row *
+static u8 *
 GetRow(struct board *board_p, u32 rowID)
 {
     ASSERT(0 <= rowID && rowID < BOARD_HEIGHT);
-    for_row(iter_p, board_p->first) {
-        if (rowID-- == 0)
-            return iter_p;
-    }
-
-    return NULL;
+    return board_p->pos[rowID];
 }
 
 static void
-ClearRow(struct board *board_p, struct row *row_p, u32 *clearedRows)
+ClearRow(struct board *board_p, i32 from, i32 to, u32 *clearedRows)
 {
-    if (row_p->prev)
-        row_p->prev->next = row_p->next;
-    if (row_p->next)
-        row_p->next->prev = row_p->prev;
+    i32 copyFrom = to + 1;
+    for (int i = from; i < BOARD_HEIGHT; i++) {
+        if (from < 0)
+            continue;
 
-    struct row *prev_p = row_p->prev;
-
-    if (row_p == board_p->first)
-        board_p->first = row_p->next;
-
-    board_p->last->next = row_p;
-    row_p->prev = board_p->last;
-    board_p->last = row_p;
-    board_p->last->next = NULL;
-
-    int y = (prev_p) ? prev_p->y : 0;
-    prev_p = (prev_p) ? prev_p : board_p->first;
-    for_row(iter_p, prev_p) {
-        iter_p->y = y++;
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            if (copyFrom + i >= BOARD_HEIGHT)
+                board_p->pos[i][j] = s_COUNT;
+            else
+                board_p->pos[i][j] = board_p->pos[copyFrom + i][j];
+        }
     }
 
-    for (int i = 0; i < BOARD_WIDTH; i++)
-        row_p->spots[i] = s_COUNT;
-
-    (*clearedRows)++;
+    (*clearedRows) += copyFrom - from;
 }
 
 static void
 _SetType(struct board *board_p, struct piece *piece_p, u32 type)
 {
-    struct row *row_p[4];
-
-    row_p[2] = GetRow(board_p, (u32)piece_p->pos.y);
-    row_p[3] = row_p[2]->next;
-    row_p[1] = row_p[2]->prev;
-    if (row_p[1] != NULL)
-        row_p[0] = row_p[1]->prev;
     for (int i = 0; i < 4; i++) {
-        int rowCount = FloorToI32(boardPieces[piece_p->type][piece_p->rot][i].y + 2);
-        if (row_p[rowCount] != NULL)
-            row_p[rowCount]->spots[(i32)(piece_p->pos.x + boardPieces[piece_p->type][piece_p->rot][i].x)] = type;
+        v2 pos = addV2(piece_p->pos, boardPieces[piece_p->type][piece_p->rot][i]);
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < BOARD_WIDTH && pos.y < BOARD_HEIGHT)
+            board_p->pos[FloorToI32(pos.y)][FloorToI32(pos.x)] = type;
     }
 }
 
@@ -131,7 +100,7 @@ IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
             continue;
         if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
             return true;
-        if (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] < s_COUNT)
+        if (board_p->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT)
             return true;
     }
 
@@ -144,7 +113,7 @@ IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
     for (int i = 0; i < 4; i++) {
         v2 check = addV2(newPos, boardPieces[piece_p->type][piece_p->rot][i]);
         if ((check.y <= -0.0001f) 
-                || (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] < s_COUNT))
+                || (board_p->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT))
             return true;
     }
 

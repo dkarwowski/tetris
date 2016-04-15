@@ -7,10 +7,10 @@ static v2
 GetDropPos(struct game_state *state_p)
 {
     i32 dropRow = 0;
-    for_row_rev(row_p, GetRow(&(state_p->board), (int)state_p->dropping.pos.y)) {
-        if (!IsCollide(&(state_p->board), &(state_p->dropping), V2(state_p->dropping.pos.x, (r32)row_p->y)))
+    for (int y = FloorToI32(state_p->dropping.pos.y); y >= 0; y--) {
+        if (!IsCollide(&(state_p->board), &(state_p->dropping), V2(state_p->dropping.pos.x, (r32)y)))
             continue;
-        dropRow = row_p->y + 1;
+        dropRow = y + 1;
         break;
     }
 
@@ -55,18 +55,9 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
             state_p->lastRotPress = 0;
             state_p->checkClear = -1;
 
-            for_row(row_p, board_p->first) {
-                for (int j = 0; j < BOARD_WIDTH; j++)
-                    row_p->spots[j] = s_COUNT;
-            }
-            for_row(row_p, state_p->nextView.first) {
-                for (int j = 0; j < BOARD_WIDTH; j++)
-                    row_p->spots[j] = s_COUNT;
-            }
-            for_row(row_p, state_p->holdView.first) {
-                for (int j = 0; j < BOARD_WIDTH; j++)
-                    row_p->spots[j] = s_COUNT;
-            }
+            BoardInitialize(board_p);
+            BoardInitialize(&(state_p->nextView));
+            BoardInitialize(&(state_p->holdView));
 
             state_p->dropping = (struct piece){
                 .pos = {(r32)(BOARD_WIDTH)/2.0f, BOARD_HEIGHT - 2},
@@ -113,21 +104,31 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->lastPause = input_p->pause.halfCount;
                 }
 
+                /*
                 if (state_p->checkClear > -1) {
+                    bool clears[4] = {false,false,false,false};
                     u8 thisClear = 0;
-                    struct row *row_p = GetRow(board_p, state_p->checkClear)->next;
-                    while (row_p) {
+
+                    for (int y = state_p->checkClear + 1; y > state_p->checkClear - 3; y--) {
                         u32 filled = 0;
-                        for (int i = 0; i < BOARD_WIDTH; i++)
-                            filled += (row_p->spots[i] < s_COUNT) ? 1 : 0;
+                        for (int x = 0; x < BOARD_WIDTH; x++)
+                            filled += (board_p->pos[y][x] < s_COUNT) ? 1 : 0;
 
                         if (filled == BOARD_WIDTH) {
-                            ClearRow(board_p, row_p, &state_p->clearedRows);
+                            clears[y - state_p->checkClear - 2] = true;
                             thisClear += 1;
                         }
-
-                        row_p = row_p->prev;
                     }
+
+                    i32 clearTo = state_p->checkClear + 1;
+                    for (int i = clearTo; i > state_p->checkClear - 3; i--) {
+                        if (!clears[i - state_p->checkClear - 2] && clearTo > i)
+                            ClearRow(board_p, i + 1, clearTo, &(state_p->clearedRows));
+                        if (!clears[i - state_p->checkClear - 2])
+                            clearTo = i - 1;
+                    }
+                    if (clearTo > state_p->checkClear - 2)
+                        ClearRow(board_p, state_p->checkClear - 2, clearTo, &(state_p->clearedRows));
 
                     state_p->score += 10 * (thisClear);
                     if (state_p->clearedRows >= state_p->clearedGoal) {
@@ -136,6 +137,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                         state_p->clearedGoal += 2;
                     }
                 }
+                */
 
                 RemovePiece(board_p, dropping_p);
                 RemoveGhost(board_p, dropping_p, state_p->ghostPos);
@@ -172,7 +174,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     for (int i = 0; i < 4; i++) {
                         v2 check = addV2(dropping_p->pos, boardPieces[dropping_p->type][dropping_p->rot][i]);
                         if ((check.x < 0.0f || check.y < 0.0f || check.x >= BOARD_WIDTH) ||
-                                (GetRow(board_p, FloorToI32(check.y))->spots[FloorToI32(check.x)] != s_COUNT)) {
+                                (board_p->pos[FloorToI32(check.y)][FloorToI32(check.x)] != s_COUNT)) {
                             dropping_p->pos = subV2(dropping_p->pos,
                                     boardPieces[dropping_p->type][dropping_p->rot][i]);
                         }
