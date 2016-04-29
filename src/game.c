@@ -104,8 +104,11 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->lastPause = input_p->pause.halfCount;
                 }
 
+                // CLEAR ROWS -----------------------------------------------------------------------------------------
                 if (state_p->checkClear > -1) {
+                    int thisClear = 0;
                     int toClear[BOARD_HEIGHT] = {0};
+
                     for (int i = 0; i < BOARD_HEIGHT; i++) {
                         for (int j = 0; j < BOARD_WIDTH; j++) {
                             toClear[i] += (board_p->pos[i][j] != s_COUNT) ? 1 : 0;
@@ -115,6 +118,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     for (int i = BOARD_HEIGHT - 1; i >= 0; i--) {
                         if (clearTo >= 0 && toClear[i] != BOARD_WIDTH) {
                             ClearRow(board_p, i + 1, clearTo, &state_p->clearedRows);
+                            thisClear += clearTo - i;
                             clearTo = -1;
                         } else if (clearTo < 0 && toClear[i] == BOARD_WIDTH) {
                             clearTo = i;
@@ -122,10 +126,18 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     }
                     if (clearTo >= 0)
                         ClearRow(board_p, 0, clearTo, &state_p->clearedRows);
+
+                    state_p->score += 10 * (thisClear);
+                    if (state_p->clearedRows >= state_p->clearedGoal) {
+                        state_p->clearedRows -= state_p->clearedGoal;
+                        state_p->dropSpeed += 0.005f;
+                        state_p->clearedGoal += 2;
+                    }
                 }
 
                 RemovePiece(board_p, dropping_p);
                 RemoveGhost(board_p, dropping_p, state_p->ghostPos);
+                // HOLD PIECE -----------------------------------------------------------------------------------------
                 if (input_p->hold.endedDown && state_p->canHold && state_p->holdCount != input_p->hold.halfCount) {
                     u8 type = state_p->dropping.type;
                     if (state_p->hold.type != s_COUNT) {
@@ -148,7 +160,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->canHold = false;
                 }
 
-                // ROTATION
+                // ROTATION -------------------------------------------------------------------------------------------
                 if (state_p->lastRotPress != input_p->rotCW.halfCount && input_p->rotCW.endedDown) {
                     dropping_p->rot = (dropping_p->rot + 1) % 4;
                     state_p->lastRotPress = input_p->rotCW.halfCount;
@@ -167,7 +179,7 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 }
 
                 v2 newPos = dropping_p->pos;
-                // MOVE R/L
+                // MOVE R/L -------------------------------------------------------------------------------------------
                 if (!input_p->left.endedDown && !input_p->right.endedDown) {
                     state_p->moveMod = 50;
                     state_p->move = -1;
