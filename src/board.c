@@ -21,15 +21,15 @@ static void
 ClearRow(struct board *board_p, i32 from, i32 to, u32 *clearedRows)
 {
     i32 copyFrom = to + 1;
-    for (int i = from; i < BOARD_HEIGHT; i++) {
+    for (int i = 0; i < BOARD_HEIGHT - from; i++) {
         if (from < 0)
             continue;
 
         for (int j = 0; j < BOARD_WIDTH; j++) {
             if (copyFrom + i >= BOARD_HEIGHT)
-                board_p->pos[i][j] = s_COUNT;
+                board_p->pos[from + i][j] = s_COUNT;
             else
-                board_p->pos[i][j] = board_p->pos[copyFrom + i][j];
+                board_p->pos[from + i][j] = board_p->pos[copyFrom + i][j];
         }
     }
 

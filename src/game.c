@@ -104,40 +104,25 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                     state_p->lastPause = input_p->pause.halfCount;
                 }
 
-                /*
                 if (state_p->checkClear > -1) {
-                    bool clears[4] = {false,false,false,false};
-                    u8 thisClear = 0;
-
-                    for (int y = state_p->checkClear + 1; y > state_p->checkClear - 3; y--) {
-                        u32 filled = 0;
-                        for (int x = 0; x < BOARD_WIDTH; x++)
-                            filled += (board_p->pos[y][x] < s_COUNT) ? 1 : 0;
-
-                        if (filled == BOARD_WIDTH) {
-                            clears[y - state_p->checkClear - 2] = true;
-                            thisClear += 1;
+                    int toClear[BOARD_HEIGHT] = {0};
+                    for (int i = 0; i < BOARD_HEIGHT; i++) {
+                        for (int j = 0; j < BOARD_WIDTH; j++) {
+                            toClear[i] += (board_p->pos[i][j] != s_COUNT) ? 1 : 0;
                         }
                     }
-
-                    i32 clearTo = state_p->checkClear + 1;
-                    for (int i = clearTo; i > state_p->checkClear - 3; i--) {
-                        if (!clears[i - state_p->checkClear - 2] && clearTo > i)
-                            ClearRow(board_p, i + 1, clearTo, &(state_p->clearedRows));
-                        if (!clears[i - state_p->checkClear - 2])
-                            clearTo = i - 1;
+                    int clearTo = -1;
+                    for (int i = BOARD_HEIGHT - 1; i >= 0; i--) {
+                        if (clearTo >= 0 && toClear[i] != BOARD_WIDTH) {
+                            ClearRow(board_p, i + 1, clearTo, &state_p->clearedRows);
+                            clearTo = -1;
+                        } else if (clearTo < 0 && toClear[i] == BOARD_WIDTH) {
+                            clearTo = i;
+                        }
                     }
-                    if (clearTo > state_p->checkClear - 2)
-                        ClearRow(board_p, state_p->checkClear - 2, clearTo, &(state_p->clearedRows));
-
-                    state_p->score += 10 * (thisClear);
-                    if (state_p->clearedRows >= state_p->clearedGoal) {
-                        state_p->clearedRows = 0;
-                        state_p->dropSpeed += 0.005f;
-                        state_p->clearedGoal += 2;
-                    }
+                    if (clearTo >= 0)
+                        ClearRow(board_p, 0, clearTo, &state_p->clearedRows);
                 }
-                */
 
                 RemovePiece(board_p, dropping_p);
                 RemoveGhost(board_p, dropping_p, state_p->ghostPos);
