@@ -13,6 +13,21 @@ Then, simply run `make` to build the library, `make run` to run the game
 itself. Note that you have to launch the game from the data directory at the
 moment, I'll be fixing that in a later update.
 
+### How to play
+
+The current controls are
+
+```
+p     : Play or pause
+Esc   : Quit the game
+Up    : Rotate
+Left  : Move Left
+Right : Move Right
+Down  : Soft Drop
+Space : Hard Drop
+c     : Swap Hold Piece
+```
+
 ## Future
 
 I plan on redoing the build system I'm using, because honestly I don't like the
