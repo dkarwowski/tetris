@@ -1,7 +1,12 @@
-SHELL  = /bin/bash
+CC = clang
+CFLAGS = -fPIC -I/usr/local/include/SDL2 -D_THREAD_SAFE -D_WD=\"$(shell pwd)\"
+WFLAGS = -Wall -Wno-missing-braces -Wno-unused-function -O0 -DDEBUG -g
+LIBS = -ldl -lm -lSDL2 -lSDL2_ttf -L/usr/local/lib 
 TARGET = tetris
+SRCDIR = src/
+BUILDDIR = bin/
 
-.PHONY: default all clean tags
+.PHONY: clean tags
 
 default: $(TARGET)
 
@@ -9,24 +14,11 @@ all: default
 
 .PRECIOUS: $(TARGET)
 
-$(TARGET):
-	./build.sh
+$(TARGET): game
+	$(CC) $(CFLAGS) $(WFLAGS) $(SRCDIR)main.c -o $(BUILDDIR)$(TARGET) -Wl,-rpath='$$ORIGIN' $(LIBS)
 
-run: $(TARGET)
-	@if [ -d "./data" ]; \
-	then \
-		pushd data && ../bin/$(TARGET) && popd; \
-	else \
-		pushd ../data && ../bin/$(TARGET) && popd; \
-	fi
-
-gdb: $(TARGET)
-	@if [ -d "./data" ]; \
-	then \
-		pushd data && gdb ../bin/$(TARGET) && popd; \
-	else \
-		pushd ../data && gdb ../bin/$(TARGET) && popd; \
-	fi
+game:
+	$(CC) $(CFLAGS) $(WFLAGS) $(SRCDIR)game.c -shared -o $(BUILDDIR)libgame.so -Wl,-soname,libgame.so $(LIBS)
 
 tags:
 	ctags -R .

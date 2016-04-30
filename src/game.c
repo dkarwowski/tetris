@@ -32,7 +32,10 @@ UpdateAndRender(game_memory *memory_p, game_input *input_p, SDL_Renderer *render
                 memory_p->permMemSize - sizeof(struct game_state)
         );
 
-        state_p->font = TTF_OpenFont("DejaVuSans.ttf", 35);
+        char fontName[128];
+        strcpy(fontName, _WD);
+        strcat(fontName, "/data/DejaVuSans.ttf");
+        state_p->font = TTF_OpenFont(fontName, 35);
         if (state_p->font == NULL) {
             printf("failed font: %s\n", TTF_GetError());
         }

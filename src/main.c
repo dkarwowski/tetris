@@ -240,8 +240,8 @@ main(int argc, char *argv[])
             prevCount = currCount;
             currCount = SDL_GetPerformanceCounter();
 
-            SDL_Delay((1000.0/GOAL_FPS - 
-                        (((currCount - prevCount) > 0) 
+            SDL_Delay((1000.0/GOAL_FPS -
+                        (((currCount - prevCount) > 0)
                          ? 1000*((currCount - prevCount)/countPerSec)
                          : 1000.0f/GOAL_FPS))*0.50f);
             do {
