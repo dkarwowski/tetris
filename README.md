@@ -9,7 +9,7 @@ Ensure you have sdl2 and sdl2\_ttf libraries installed, as well as clang. You
 could go into the `build.sh` file and replace clang with gcc, as it should
 compile with either.
 
-Then, simply run `make` to build the library, `make run` to run the game
+Then, simply run `make` to build the library, `./bin/tetris` to run the game
 itself. Note that you have to launch the game from the data directory at the
 moment, I'll be fixing that in a later update.
 
