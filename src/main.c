@@ -1,67 +1,67 @@
 #include "main.h"
 
 static void
-ProcessKeyboardInput(game_control *oControl_p, game_control *nControl_p, bool isDown)
+ProcessKeyboardInput(game_control *oControl, game_control *nControl, bool isDown)
 {
-    nControl_p->endedDown = isDown;
-    nControl_p->halfCount += (oControl_p->endedDown != nControl_p->endedDown) ? 1 : 0;
+    nControl->endedDown = isDown;
+    nControl->halfCount += (oControl->endedDown != nControl->endedDown) ? 1 : 0;
 }
 
 static bool
-HandleEvent(SDL_Event *event_p, game_input *oInput_p, game_input *nInput_p)
+HandleEvent(SDL_Event *event, game_input *oInput, game_input *nInput)
 {
     bool result = false;
 
-    switch (event_p->type) {
+    switch (event->type) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
         {
-            bool wasDown = event_p->key.repeat != 0 || event_p->key.state == SDL_RELEASED;
-            bool isDown  = event_p->key.repeat != 0 || event_p->key.state == SDL_PRESSED;
+            bool wasDown = event->key.repeat != 0 || event->key.state == SDL_RELEASED;
+            bool isDown  = event->key.repeat != 0 || event->key.state == SDL_PRESSED;
 
             if (wasDown != isDown) {
-                if (event_p->key.keysym.sym == SDLK_LEFT)
-                    ProcessKeyboardInput(&(oInput_p->left), &(nInput_p->left), isDown);
-                if (event_p->key.keysym.sym == SDLK_RIGHT)
-                    ProcessKeyboardInput(&(oInput_p->right), &(nInput_p->right), isDown);
-                if (event_p->key.keysym.sym == SDLK_UP)
-                    ProcessKeyboardInput(&(oInput_p->rotCW), &(nInput_p->rotCW), isDown);
-                if (event_p->key.keysym.sym == SDLK_DOWN)
-                    ProcessKeyboardInput(&(oInput_p->softDrop), &(nInput_p->softDrop), isDown);
-                if (event_p->key.keysym.sym == SDLK_SPACE)
-                    ProcessKeyboardInput(&(oInput_p->hardDrop), &(nInput_p->hardDrop), isDown);
-                if (event_p->key.keysym.sym == SDLK_p)
-                    ProcessKeyboardInput(&(oInput_p->pause), &(nInput_p->pause), isDown);
-                if (event_p->key.keysym.sym == SDLK_c)
-                    ProcessKeyboardInput(&(oInput_p->hold), &(nInput_p->hold), isDown);
+                if (event->key.keysym.sym == SDLK_LEFT)
+                    ProcessKeyboardInput(&(oInput->left), &(nInput->left), isDown);
+                if (event->key.keysym.sym == SDLK_RIGHT)
+                    ProcessKeyboardInput(&(oInput->right), &(nInput->right), isDown);
+                if (event->key.keysym.sym == SDLK_UP)
+                    ProcessKeyboardInput(&(oInput->rotCW), &(nInput->rotCW), isDown);
+                if (event->key.keysym.sym == SDLK_DOWN)
+                    ProcessKeyboardInput(&(oInput->softDrop), &(nInput->softDrop), isDown);
+                if (event->key.keysym.sym == SDLK_SPACE)
+                    ProcessKeyboardInput(&(oInput->hardDrop), &(nInput->hardDrop), isDown);
+                if (event->key.keysym.sym == SDLK_p)
+                    ProcessKeyboardInput(&(oInput->pause), &(nInput->pause), isDown);
+                if (event->key.keysym.sym == SDLK_c)
+                    ProcessKeyboardInput(&(oInput->hold), &(nInput->hold), isDown);
 
 #ifdef DEBUG
-                if (event_p->key.keysym.sym == SDLK_r)
-                    ProcessKeyboardInput(&(oInput_p->reload), &(nInput_p->reload), isDown);
+                if (event->key.keysym.sym == SDLK_r)
+                    ProcessKeyboardInput(&(oInput->reload), &(nInput->reload), isDown);
 #endif
 
-                if (event_p->key.keysym.sym == SDLK_ESCAPE)
-                    ProcessKeyboardInput(&(oInput_p->terminate), &(nInput_p->terminate), isDown);
+                if (event->key.keysym.sym == SDLK_ESCAPE)
+                    ProcessKeyboardInput(&(oInput->terminate), &(nInput->terminate), isDown);
             }
 
-            if (event_p->key.keysym.sym == SDLK_ESCAPE)
+            if (event->key.keysym.sym == SDLK_ESCAPE)
                 result = true;
         } break;
         case SDL_WINDOWEVENT:
         {
-            if (event_p->window.event == SDL_WINDOWEVENT_FOCUS_LOST ||
-                    event_p->window.event == SDL_WINDOWEVENT_HIDDEN) {
-                nInput_p->paused = true;
-                oInput_p->paused = true;
+            if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST ||
+                    event->window.event == SDL_WINDOWEVENT_HIDDEN) {
+                nInput->paused = true;
+                oInput->paused = true;
             }
-            if (event_p->window.event == SDL_WINDOWEVENT_FOCUS_GAINED ||
-                    event_p->window.event == SDL_WINDOWEVENT_SHOWN) {
-                nInput_p->paused = false;
-                oInput_p->paused = false;
+            if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED ||
+                    event->window.event == SDL_WINDOWEVENT_SHOWN) {
+                nInput->paused = false;
+                oInput->paused = false;
             }
 #ifdef WIN_BUILD
-            if (event_p->window.event == SDL_WINDOWEVENT_MOVED) {
-                nInput_p->paused = true;
+            if (event->window.event == SDL_WINDOWEVENT_MOVED) {
+                nInput->paused = true;
             }
 #endif
         } break;
@@ -80,7 +80,7 @@ HandleEvent(SDL_Event *event_p, game_input *oInput_p, game_input *nInput_p)
 #define SDL_LOG(msg) printf( msg ": %s\n", SDL_GetError())
 
 static bool
-InitializeWindowAndRenderer(SDL_Window **window_p, SDL_Renderer **renderer_p)
+InitializeWindowAndRenderer(SDL_Window **window, SDL_Renderer **renderer)
 {
     bool result = true;
 
@@ -93,7 +93,7 @@ InitializeWindowAndRenderer(SDL_Window **window_p, SDL_Renderer **renderer_p)
         SDL_LOG("Error initializing");
         result = false;
     } else {
-        *window_p = SDL_CreateWindow(
+        *window = SDL_CreateWindow(
                 "Tetris",
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
@@ -102,17 +102,17 @@ InitializeWindowAndRenderer(SDL_Window **window_p, SDL_Renderer **renderer_p)
                 SDL_WINDOW_ALLOW_HIGHDPI
         );
 
-        if (*window_p == NULL) {
+        if (*window == NULL) {
             SDL_LOG("Error creating window");
             result = false;
         } else {
-            *renderer_p = SDL_CreateRenderer(
-                    *window_p,
+            *renderer = SDL_CreateRenderer(
+                    *window,
                     -1,
                     SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC
             );
 
-            if (*renderer_p == NULL) {
+            if (*renderer == NULL) {
                 SDL_LOG("Error creating renderer");
                 result = false;
             }
@@ -123,75 +123,75 @@ InitializeWindowAndRenderer(SDL_Window **window_p, SDL_Renderer **renderer_p)
 }
 
 static void
-UnloadGame(game_lib *lib_p)
+UnloadGame(game_lib *lib)
 {
-    if (lib_p->gameLib_p) {
+    if (lib->gameLib) {
 #ifdef WIN_BUILD
-        FreeLibrary(lib_p->gameLib_p);
+        FreeLibrary(lib->gameLib);
 #else
-        dlclose(lib_p->gameLib_p);
+        dlclose(lib->gameLib);
 #endif
     }
 
-    lib_p->UpdateAndRender_fp = 0;
-    lib_p->isValid = false;
+    lib->UpdateAndRender_fp = 0;
+    lib->isValid = false;
 }
 
 static void
-LoadGame(game_lib *lib_p)
+LoadGame(game_lib *lib)
 {
 #ifdef WIN_BUILD
     WIN32_FILE_ATTRIBUTE_DATA fileAttr;
     if (GetFileAttributesEx("../bin/game.dll", GetFileExInfoStandard, &fileAttr)) {
-        if (CompareFileTime(&lib_p->lastWriteTime, &fileAttr.ftLastWriteTime) != 0) {
-            lib_p->lastWriteTime = fileAttr.ftLastWriteTime;
+        if (CompareFileTime(&lib->lastWriteTime, &fileAttr.ftLastWriteTime) != 0) {
+            lib->lastWriteTime = fileAttr.ftLastWriteTime;
 #else
     struct stat fileStat;
     if (stat("../bin/libgame.so", &fileStat) == 0) {
-        if (lib_p->ino != fileStat.st_ino) {
-            lib_p->ino = fileStat.st_ino;
+        if (lib->ino != fileStat.st_ino) {
+            lib->ino = fileStat.st_ino;
 #endif
-            lib_p->isValid = false;
+            lib->isValid = false;
         }
     }
 
-    if (lib_p->isValid == false) {
-        UnloadGame(lib_p);
+    if (lib->isValid == false) {
+        UnloadGame(lib);
 
 #ifdef WIN_BUILD
         CopyFile("../bin/game.dll", "../bin/game-run.dll", 0);
-        lib_p->gameLib_p = LoadLibraryA("../bin/game-run.dll");
-        if (lib_p->gameLib_p)
-            lib_p->UpdateAndRender_fp = (upd_and_ren *)GetProcAddress(lib_p->gameLib_p, "UpdateAndRender");
+        lib->gameLib = LoadLibraryA("../bin/game-run.dll");
+        if (lib->gameLib)
+            lib->UpdateAndRender_fp = (upd_and_ren *)GetProcAddress(lib->gameLib, "UpdateAndRender");
         else
-            lib_p->UpdateAndRender_fp = 0;
+            lib->UpdateAndRender_fp = 0;
 #else
-        lib_p->gameLib_p = dlopen("libgame.so", RTLD_LAZY);
-        if (!lib_p->gameLib_p) {
+        lib->gameLib = dlopen("libgame.so", RTLD_LAZY);
+        if (!lib->gameLib) {
             printf("failed to open: %s\n", dlerror());
-            lib_p->UpdateAndRender_fp = 0;
+            lib->UpdateAndRender_fp = 0;
         } else {
             dlerror();
-            lib_p->UpdateAndRender_fp = (upd_and_ren *)dlsym(lib_p->gameLib_p, "UpdateAndRender");
+            lib->UpdateAndRender_fp = (upd_and_ren *)dlsym(lib->gameLib, "UpdateAndRender");
             const char *err = dlerror();
             if (err) {
                 printf("failed to open: %s\n", err);
-                lib_p->UpdateAndRender_fp = 0;
+                lib->UpdateAndRender_fp = 0;
             }
         }
 #endif
 
-        lib_p->isValid = (lib_p->UpdateAndRender_fp) ? true : false;
+        lib->isValid = (lib->UpdateAndRender_fp) ? true : false;
     }
 }
 
 int
 main(int argc, char *argv[])
 {
-    SDL_Window *window_p;
-    SDL_Renderer *renderer_p;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
 
-    if (InitializeWindowAndRenderer(&window_p, &renderer_p)) {
+    if (InitializeWindowAndRenderer(&window, &renderer)) {
         game_lib gameLib = {0};
 
         game_memory memory = {0};
@@ -208,8 +208,8 @@ main(int argc, char *argv[])
         game_input nInput = {0};
 
         int width, height;
-        SDL_GetWindowSize(window_p, &width, &height);
-        SDL_RenderSetLogicalSize(renderer_p, width*2, height*2);
+        SDL_GetWindowSize(window, &width, &height);
+        SDL_RenderSetLogicalSize(renderer, width*2, height*2);
 
         LoadGame(&gameLib);
 
@@ -250,13 +250,13 @@ main(int argc, char *argv[])
             nInput.dt = (double)(currCount - prevCount)/countPerSec;
 
             if (gameLib.UpdateAndRender_fp)
-                gameLib.UpdateAndRender_fp(&memory, &nInput, renderer_p);
+                gameLib.UpdateAndRender_fp(&memory, &nInput, renderer);
         }
 
         UnloadGame(&gameLib);
         TTF_Quit();
-        SDL_DestroyRenderer(renderer_p);
-        SDL_DestroyWindow(window_p);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
         SDL_Quit();
 
         return 0;

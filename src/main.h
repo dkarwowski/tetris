@@ -74,7 +74,7 @@ typedef struct {
     ino_t ino;
 #endif
 
-    void *gameLib_p;
+    void *gameLib;
     upd_and_ren *UpdateAndRender_fp;
 } game_lib;
 

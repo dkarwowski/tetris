@@ -1,24 +1,49 @@
 #include "board.h"
 
+/**
+ * Initialize the board to all blank positions
+ *
+ * in:
+ *  board : what should be initialized
+ */
 void
-BoardInitialize(struct board *board_p)
+BoardInitialize(struct board *board)
 {
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
-            board_p->pos[i][j] = s_COUNT;
+            board->pos[i][j] = s_COUNT;
         }
     }
 }
 
+/**
+ * Get the row at a specific index from the board
+ *
+ * in:
+ *  board : the board to grab from
+ *  rowID   : the index of the row
+ * out:
+ *  u8 * that points to the beginning of the row
+ */
 static u8 *
-GetRow(struct board *board_p, u32 rowID)
+GetRow(struct board *board, u32 rowID)
 {
     ASSERT(0 <= rowID && rowID < BOARD_HEIGHT);
-    return board_p->pos[rowID];
+    return board->pos[rowID];
 }
 
+/**
+ * Clear the rows over an index of a range
+ * TODO(david): potentially just have a single call for each row?
+ *
+ * in:
+ *  board    : board to clear a row in
+ *  from       : index to start from
+ *  to         : index of the last row to be cleared
+ *  clearedRow : pointer to number of cleared rows
+ */
 static void
-ClearRow(struct board *board_p, i32 from, i32 to, u32 *clearedRows)
+ClearRow(struct board *board, i32 from, i32 to, u32 *clearedRows)
 {
     i32 copyFrom = to + 1;
     for (int i = 0; i < BOARD_HEIGHT - from; i++) {
@@ -27,128 +52,105 @@ ClearRow(struct board *board_p, i32 from, i32 to, u32 *clearedRows)
 
         for (int j = 0; j < BOARD_WIDTH; j++) {
             if (copyFrom + i >= BOARD_HEIGHT)
-                board_p->pos[from + i][j] = s_COUNT;
+                board->pos[from + i][j] = s_COUNT;
             else
-                board_p->pos[from + i][j] = board_p->pos[copyFrom + i][j];
+                board->pos[from + i][j] = board->pos[copyFrom + i][j];
         }
     }
 
     (*clearedRows) += copyFrom - from;
 }
 
+/**
+ * Helper function to set a piece on the board to a specific type
+ *
+ * in:
+ *  board : the board where we want to set
+ *  piece : the piece to be placed or removed
+ *  type    : what should be written to these positions (not necessarily the piece's type)
+ */
 static void
-_SetType(struct board *board_p, struct piece *piece_p, u32 type)
+_SetType(struct board *board, struct piece *piece, u32 type)
 {
     for (int i = 0; i < 4; i++) {
-        v2 pos = addV2(piece_p->pos, boardPieces[piece_p->type][piece_p->rot][i]);
+        v2 pos = addV2(piece->pos, boardPieces[piece->type][piece->rot][i]);
         if (pos.x >= 0 && pos.y >= 0 && pos.x < BOARD_WIDTH && pos.y < BOARD_HEIGHT)
-            board_p->pos[FloorToI32(pos.y)][FloorToI32(pos.x)] = type;
+            board->pos[FloorToI32(pos.y)][FloorToI32(pos.x)] = type;
     }
 }
 
+/**
+ * Place a piece on the board
+ *
+ * in:
+ *  board : the board
+ *  piece : piece to be placed
+ */
 static void
-PlacePiece(struct board *board_p, struct piece *piece_p)
+PlacePiece(struct board *board, struct piece *piece)
 {
-    _SetType(board_p, piece_p, piece_p->type);
+    _SetType(board, piece, piece->type);
 }
 
+/**
+ * Remove a piece from the board
+ *
+ * in:
+ *  board : the board
+ *  piece : piece to be removed, position should be identical to that on the board
+ */
 static void
-RemovePiece(struct board *board_p, struct piece *piece_p)
+RemovePiece(struct board *board, struct piece *piece)
 {
-    _SetType(board_p, piece_p, s_COUNT);
+    _SetType(board, piece, s_COUNT);
 }
 
-static void
-PlaceGhost(struct board *board_p, struct piece *piece_p, v2 pos)
-{
-    v2 tempHold = piece_p->pos;
-    piece_p->pos = pos;
-    _SetType(board_p, piece_p, s_GHOST);
-    piece_p->pos = tempHold;
-}
-
-static void
-RemoveGhost(struct board *board_p, struct piece *piece_p, v2 pos)
-{
-    v2 tempHold = piece_p->pos;
-    piece_p->pos = pos;
-    _SetType(board_p, piece_p, s_COUNT);
-    piece_p->pos = tempHold;
-}
-
-static void
-PlaceView(struct board *board_p, struct piece *piece_p)
-{
-    v2 tempHold = piece_p->pos;
-    piece_p->pos = V2(2.0f, 2.0f);
-    _SetType(board_p, piece_p, piece_p->type);
-    piece_p->pos = tempHold;
-}
-
-static void
-RemoveView(struct board *board_p, struct piece *piece_p)
-{
-    RemoveGhost(board_p, piece_p, V2(2.0f, 2.0f));
-}
-
+/**
+ * Check for a collision on the board with a piece and the potential position
+ *
+ * in:
+ *  board : what to check for a collision on
+ *  piece : information for how we're checking for a collision
+ *  newPos  : where we're checking for collisions
+ * out:
+ *  whether or not we found a collision
+ */
 static bool
-IsCollide(struct board *board_p, struct piece *piece_p, v2 newPos)
+IsCollide(struct board *board, struct piece *piece, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, boardPieces[piece_p->type][piece_p->rot][i]);
+        v2 check = addV2(newPos, boardPieces[piece->type][piece->rot][i]);
         if (check.y >= BOARD_HEIGHT)
             continue;
         if (check.x <= -0.00001f || check.y <= -0.00001f || check.x >= BOARD_WIDTH)
             return true;
-        if (board_p->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT)
+        if (board->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT)
             return true;
     }
 
     return false;
 }
 
+/**
+ * Specifically check for a collision with the bottom
+ * TODO(david): make collision checking more general, maybe with masking?
+ *
+ * in:
+ *  board : what to check for a collision on
+ *  piece : information for how we're checking for a collision
+ *  newPos  : where we're checking for collisions
+ * out:
+ *  whether or not we found a collision
+ */
 static bool
-IsCollideBottom(struct board *board_p, struct piece *piece_p, v2 newPos)
+IsCollideBottom(struct board *board, struct piece *piece, v2 newPos)
 {
     for (int i = 0; i < 4; i++) {
-        v2 check = addV2(newPos, boardPieces[piece_p->type][piece_p->rot][i]);
+        v2 check = addV2(newPos, boardPieces[piece->type][piece->rot][i]);
         if ((check.y <= -0.0001f) 
-                || (board_p->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT))
+                || (board->pos[FloorToI32(check.y)][FloorToI32(check.x)] < s_COUNT))
             return true;
     }
 
     return false;
-}
-
-static v4
-DK_GetTypeColor(u8 type)
-{
-    v4 result;
-    switch (type) {
-    case s_I:
-        result = V4i(255, 0, 0, 255);
-        break;
-    case s_T:
-        result = V4i(0, 255, 0, 255);
-        break;
-    case s_S:
-        result = V4i(0, 0, 255, 255);
-        break;
-    case s_Z:
-        result = V4i(255, 255, 0, 255);
-        break;
-    case s_L:
-        result = V4i(0, 255, 255, 255);
-        break;
-    case s_J:
-        result = V4i(255, 125, 0, 255);
-        break;
-    case s_O:
-        result = V4i(0, 125, 255, 255);
-        break;
-    default:
-        result = V4i(50, 50, 50, 255);
-    }
-
-    return result;
 }
