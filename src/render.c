@@ -259,9 +259,9 @@ DK_RenderGame(SDL_Renderer *renderer, struct game_state *state)
     // RENDER SCORE & LEFT TO CLEAR ----------------------------------------------------------------------
     char temp[15];
     sprintf(temp, "%5d", (i32)state->score);
-    DK_RenderTextRight(renderer, state->font, temp, V2i(185 + (BOARD_WIDTH*BLOCK_SIZE), 200));
+    DK_RenderTextRight(renderer, state->font, temp, V2i(225 + (BOARD_WIDTH*BLOCK_SIZE), 200));
 
     sprintf(temp, "%2d - %3d",
             (state->clearedGoal - 10)/2 + 1, (state->clearedGoal - state->clearedRows));
-    DK_RenderTextRight(renderer, state->font, temp, V2i(185 + (BOARD_WIDTH*BLOCK_SIZE), 150));
+    DK_RenderTextRight(renderer, state->font, temp, V2i(225 + (BOARD_WIDTH*BLOCK_SIZE), 150));
 }

@@ -107,7 +107,7 @@ UpdateAndRender(game_memory *memory, game_input *input, SDL_Renderer *renderer)
         char fontName[128];
         strcpy(fontName, _WD);
         strcat(fontName, "/data/DejaVuSans.ttf");
-        state->font = TTF_OpenFont(fontName, 35);
+        state->font = TTF_OpenFont(fontName, 55);
         if (state->font == NULL) {
             printf("failed font: %s\n", TTF_GetError());
         }

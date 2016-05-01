@@ -140,14 +140,18 @@ UnloadGame(game_lib *lib)
 static void
 LoadGame(game_lib *lib)
 {
+    char libraryName[128];
+    strcpy(libraryName, _WD);
 #ifdef WIN_BUILD
+    strcat(libraryName, "/bin/game.dll");
     WIN32_FILE_ATTRIBUTE_DATA fileAttr;
-    if (GetFileAttributesEx("../bin/game.dll", GetFileExInfoStandard, &fileAttr)) {
+    if (GetFileAttributesEx(libraryName, GetFileExInfoStandard, &fileAttr)) {
         if (CompareFileTime(&lib->lastWriteTime, &fileAttr.ftLastWriteTime) != 0) {
             lib->lastWriteTime = fileAttr.ftLastWriteTime;
 #else
+    strcat(libraryName, "/bin/libgame.so");
     struct stat fileStat;
-    if (stat("../bin/libgame.so", &fileStat) == 0) {
+    if (stat(libraryName, &fileStat) == 0) {
         if (lib->ino != fileStat.st_ino) {
             lib->ino = fileStat.st_ino;
 #endif
@@ -159,8 +163,11 @@ LoadGame(game_lib *lib)
         UnloadGame(lib);
 
 #ifdef WIN_BUILD
-        CopyFile("../bin/game.dll", "../bin/game-run.dll", 0);
-        lib->gameLib = LoadLibraryA("../bin/game-run.dll");
+        char libraryRun[128];
+        strcpy(libraryRun, _WD);
+        strcat(libraryRun, "/bin/game-run.dll");
+        CopyFile(libraryName, libraryRun, 0);
+        lib->gameLib = LoadLibraryA(libraryRun);
         if (lib->gameLib)
             lib->UpdateAndRender_fp = (upd_and_ren *)GetProcAddress(lib->gameLib, "UpdateAndRender");
         else
